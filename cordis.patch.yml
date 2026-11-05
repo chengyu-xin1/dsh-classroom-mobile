@@ -1,0 +1,4 @@
+# dsh-classroom-mobile bundle patch: 把插件挂进 profile 的 bundle 栈。
+- insert:
+    - id: classroom-mobile
+      name: 'dsh-classroom-mobile'
