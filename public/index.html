@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f5fa">
+<meta name="format-detection" content="telephone=no">
+<title>课堂学习</title>
+<style>
+  :root{
+    --bg:#f2f5fa; --card:#ffffff; --text:#16202c; --muted:#5b6b7f;
+    --accent:#2457e6; --accent-dark:#1b46bb; --accent-soft:#e9efff;
+    --danger:#d92d20; --danger-bg:#fef1ef; --danger-line:#f7c9c2;
+    --ok:#067647; --ok-bg:#eafaf1; --ok-line:#bfe8d2;
+    --warn:#b54708; --warn-bg:#fff6e8; --warn-line:#f3d9a8;
+    --line:#dbe3ef; --radius:16px;
+    --topbar-h:64px; --tabbar-h:78px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:18px;line-height:1.7;color:var(--text);background:var(--bg);
+    padding-top:calc(var(--topbar-h) + env(safe-area-inset-top));
+    padding-bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);
+    overflow-wrap:break-word;
+  }
+  h2{font-size:22px;margin:4px 0 14px}
+  h3{font-size:19px;margin:0}
+  p{margin:0 0 10px}
+  strong{font-weight:700;color:#0d1b2a}
+
+  /* ---------- 顶部固定栏 ---------- */
+  #topbar{
+    position:fixed;left:0;right:0;top:0;z-index:30;
+    height:calc(var(--topbar-h) + env(safe-area-inset-top));
+    padding:env(safe-area-inset-top) 16px 0 16px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:rgba(255,255,255,.96);backdrop-filter:saturate(180%) blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .tb-main{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+  .dot{width:14px;height:14px;border-radius:50%;background:#9aa7b8;flex:0 0 auto;box-shadow:0 0 0 4px rgba(154,167,184,.18)}
+  .dot.rec{background:#e5484d;box-shadow:0 0 0 4px rgba(229,72,77,.2);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .tb-title{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .tb-side{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .tb-state{font-size:15px;color:var(--muted);white-space:nowrap}
+  .tb-timer{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.5px;background:#eef2f8;border-radius:10px;padding:2px 10px}
+
+  /* ---------- 页签 ---------- */
+  #tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    height:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom)) 8px;
+    display:flex;gap:6px;background:rgba(255,255,255,.97);
+    border-top:1px solid var(--line);
+  }
+  .tab{
+    flex:1 1 0;position:relative;min-height:56px;border:0;border-radius:14px;
+    background:transparent;color:var(--muted);font-size:17px;font-weight:600;
+    font-family:inherit;cursor:pointer;
+  }
+  .tab.active{background:var(--accent-soft);color:var(--accent-dark)}
+  .tab .badge{
+    position:absolute;top:3px;right:8px;min-width:22px;height:22px;line-height:22px;
+    border-radius:11px;background:var(--danger);color:#fff;font-size:13px;font-weight:700;padding:0 6px;
+  }
+
+  /* ---------- 页面容器 ---------- */
+  main{padding:16px 16px 8px}
+  .page{display:none}
+  .page.active{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .label{display:block;font-size:17px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  .input,.textarea{
+    width:100%;font-family:inherit;font-size:19px;color:var(--text);
+    background:#f8fafd;border:1.5px solid var(--line);border-radius:14px;
+    padding:12px 14px;min-height:56px;
+  }
+  .input:focus,.textarea:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 4px rgba(36,87,230,.12)}
+  .textarea{min-height:120px;line-height:1.6;resize:vertical}
+  .btn{
+    display:block;width:100%;min-height:56px;padding:12px 16px;margin-top:12px;
+    font-family:inherit;font-size:19px;font-weight:700;color:#fff;
+    background:var(--accent);border:0;border-radius:14px;cursor:pointer;
+  }
+  .btn:active{background:var(--accent-dark)}
+  .btn:disabled{background:#c3ccd9;color:#f4f7fb;cursor:not-allowed}
+  .btn-danger{background:var(--danger)}
+  .btn-danger:active{background:#b42318}
+  .btn-secondary{background:#3b4c63}
+  .btn-secondary:active{background:#2c3a4d}
+  .btn-ghost{
+    width:auto;margin:0;min-height:44px;padding:6px 14px;font-size:16px;font-weight:600;
+    color:var(--accent-dark);background:var(--accent-soft);border-radius:12px;
+  }
+  .btn-sm{min-height:44px;font-size:16px}
+  .btn-block{margin-top:6px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .small{font-size:16px;color:var(--muted);margin-top:10px}
+  .foot-note{font-size:16px;color:var(--muted);margin:4px 2px 18px;line-height:1.6}
+  .banner{border-radius:14px;padding:12px 14px;font-size:18px;font-weight:600;line-height:1.6;margin-top:12px}
+  .banner.warn{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}
+  .banner.danger{background:var(--danger-bg);border:1px solid var(--danger-line);color:var(--danger)}
+  .banner.ok{background:var(--ok-bg);border:1px solid var(--ok-line);color:var(--ok)}
+  .empty{color:var(--muted);font-size:18px;padding:8px 2px}
+  .live-list{display:flex;flex-direction:column;gap:8px}
+  .live-item{display:flex;gap:10px;font-size:18px;line-height:1.6;background:#f7f9fd;border-radius:12px;padding:10px 12px}
+  .live-item .t{color:var(--accent-dark);font-weight:700;flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .last-text{white-space:pre-wrap;font-family:inherit;font-size:17px;color:var(--muted);background:#f7f9fd;border-radius:12px;padding:10px 12px;margin:10px 0 0}
+
+  /* ---------- Markdown ---------- */
+  .md{font-size:18px;line-height:1.75}
+  .md h1,.md h2,.md h3,.md h4{font-size:21px;margin:14px 0 8px;line-height:1.4;color:#0d1b2a}
+  .md h1{font-size:24px}
+  .md h3,.md h4{font-size:19px}
+  .md p{margin:0 0 10px}
+  .md ul,.md ol{margin:0 0 10px;padding-left:26px}
+  .md li{margin:4px 0}
+  .md code{font-size:16px;background:#eef2f8;border-radius:6px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace}
+  .md pre{background:#101828;color:#e6edf7;border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:15px;line-height:1.55;margin:10px 0}
+  .md pre code{background:transparent;color:inherit;padding:0;font-size:15px}
+  .md blockquote{border-left:4px solid var(--line);margin:10px 0;padding:2px 0 2px 12px;color:var(--muted)}
+  .md hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+
+  /* ---------- 导图树 ---------- */
+  .tree,.tree ul{list-style:none;margin:0;padding:0}
+  .tree>li{margin:6px 0}
+  .tree ul{padding-left:20px;margin-left:9px;border-left:2px dashed #c9d6ea}
+  .tree li{position:relative;margin:8px 0}
+  .tree ul>li::before{content:"";position:absolute;left:-20px;top:22px;width:14px;border-top:2px dashed #c9d6ea}
+  .node{
+    display:inline-block;font-size:18px;line-height:1.5;padding:8px 14px;border-radius:12px;
+    background:#eef3ff;border:1px solid #d6e2ff;color:#16357e;font-weight:600;
+  }
+  .node.d0{background:var(--accent);border-color:var(--accent);color:#fff;font-size:20px}
+  .node.d1{background:#e2ebff;font-size:19px}
+  .node.d2{background:#f0f4ff}
+  .node .cnt{font-size:14px;font-weight:700;color:inherit;opacity:.7;margin-left:6px}
+  details.src{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  details.src summary{cursor:pointer;font-size:17px;font-weight:700;color:var(--accent-dark);padding:6px 0;list-style:none}
+  details.src summary::-webkit-details-marker{display:none}
+  details.src summary::before{content:"▶ ";font-size:13px}
+  details.src[open] summary::before{content:"▼ "}
+  details.src pre{white-space:pre-wrap;word-break:break-word;background:#f7f9fd;border-radius:12px;padding:12px;font-size:15px;line-height:1.6;max-height:46vh;overflow:auto}
+
+  /* ---------- 复习 ---------- */
+  .qcard{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px;background:#fbfcfe}
+  .qcard.wrong{border-color:var(--danger-line);background:var(--danger-bg)}
+  .qhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+  .qno{flex:0 0 auto;min-width:34px;height:34px;line-height:34px;text-align:center;border-radius:10px;background:var(--accent-soft);color:var(--accent-dark);font-weight:700;font-size:17px}
+  .qtxt{font-size:19px;font-weight:600;line-height:1.55;flex:1}
+  .metaline{font-size:16px;color:var(--muted);margin:6px 0 2px}
+  .ans-status{font-size:16px;font-weight:700;color:var(--ok);margin-top:8px}
+  .ans-status.wait{color:var(--muted);font-weight:600}
+  .pill{display:inline-block;font-size:14px;font-weight:700;border-radius:999px;padding:2px 10px;margin-left:6px;vertical-align:2px}
+  .pill.wrong{background:#fde3df;color:var(--danger)}
+  .pill.wait{background:#eef2f8;color:var(--muted)}
+
+  /* ---------- 提示条 ---------- */
+  #toast{
+    position:fixed;left:50%;top:calc(var(--topbar-h) + env(safe-area-inset-top) + 10px);
+    transform:translate(-50%,-20px);z-index:60;max-width:92vw;
+    padding:12px 16px;border-radius:14px;font-size:17px;font-weight:600;line-height:1.5;
+    background:#1f2b3d;color:#fff;box-shadow:0 8px 24px rgba(16,24,40,.24);
+    opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{background:#b42318}
+  #toast.ok{background:#046c4b}
+  @media (min-width:720px){
+    main{max-width:720px;margin:0 auto}
+    #tabbar{padding-left:calc((100vw - 720px)/2);padding-right:calc((100vw - 720px)/2)}
+  }
+</style>
+</head>
+<body>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<header id="topbar">
+  <div class="tb-main">
+    <span class="dot" id="statusDot" aria-hidden="true"></span>
+    <span class="tb-title" id="tbTitle">未开始上课</span>
+  </div>
+  <div class="tb-side">
+    <span class="tb-state" id="tbState">已停止</span>
+    <!-- 计时器格式 mm:ss，分钟数不封顶（例如 62:05 表示 62 分 5 秒），由 JS 的 fmtSec() 生成 -->
+    <span class="tb-timer" id="timer">00:00</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ========== 录音页 ========== -->
+  <section class="page active" id="page-record" data-page="record">
+    <h2>录音</h2>
+
+    <div class="card">
+      <label class="label" for="titleInput">课堂标题</label>
+      <input id="titleInput" class="input" type="text" placeholder="例如：高等数学 第3讲" autocomplete="off" maxlength="40">
+      <button id="btnStart" class="btn btn-primary" type="button">开始上课</button>
+      <button id="btnStop" class="btn btn-danger" type="button" hidden>结束上课</button>
+      <div id="gateHint" class="banner warn" hidden></div>
+      <div class="row small">
+        <span id="chunkHint">已上传 0 片</span>
+        <span id="recHint">每 30 秒自动切一片上传</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>实时字幕</h3>
+        <button id="btnLiveRefresh" class="btn btn-ghost" type="button">刷新</button>
+      </div>
+      <div id="liveList" class="live-list">
+        <div class="empty">还没有字幕。开始上课后每 3 秒刷新一次。</div>
+      </div>
+      <pre id="lastText" class="last-text" hidden></pre>
+      <div id="asrOff" class="banner warn" hidden>
+        转写引擎未就绪。可以先把老师讲的内容手动粘贴到下面；转不出来就留空，不会伪造文字。
+      </div>
+      <div id="manualBox" hidden>
+        <label class="label" for="manualText" style="margin-top:14px">手动补充文字</label>
+        <textarea id="manualText" class="textarea" rows="5" placeholder="把老师讲的内容打进来…"></textarea>
+        <button id="btnManual" class="btn btn-secondary" type="button">提交手动文字</button>
+      </div>
+    </div>
+
+    <p class="foot-note">专注只记录：上课时切到别的应用不会被拦住，但离开和回来的时间会被记下来，用于生成专注报告。建议保持页面在前台，字幕才会持续刷新。</p>
+  </section>
+
+  <!-- ========== 总结页 ========== -->
+  <section class="page" id="page-summary" data-page="summary">
+    <h2>总结</h2>
+    <div class="card">
+      <div class="card-head">
+        <h3>本节课总结</h3>
+        <button id="btnSummaryRefresh" class="btn btn-ghost" type="button">刷新</button>
+      </div>
+      <div id="summaryBody" class="md"><div class="empty">加载中…</div></div>
+    </div>
+  </section>
+
+  <!-- ========== 导图页 ========== -->
+  <section class="page" id="page-mindmap" data-page="mindmap">
+    <h2>导图</h2>
+    <div class="card">
+      <div class="card-head">
+        <h3>知识结构</h3>
+        <button id="btnMindmapRefresh" class="btn btn-ghost" type="button">刷新</button>
+      </div>
+      <div id="mindmapBody"><div class="empty">加载中…</div></div>
+      <details class="src" id="mindmapSrcWrap" hidden>
+        <summary>查看源码</summary>
+        <pre id="mindmapSrc"></pre>
+      </details>
+    </div>
+  </section>
+
+  <!-- ========== 复习页 ========== -->
+  <section class="page" id="page-review" data-page="review">
+    <h2>复习</h2>
+    <div id="reviewBanner" class="banner danger" hidden></div>
+    <div id="pendingList"></div>
+    <div id="reviewOk" class="banner ok" hidden>所有错题都已改正。</div>
+    <button id="btnGoRecord" class="btn" type="button" hidden>可以开始新录音</button>
+
+    <div class="card" id="newQCard" hidden style="margin-top:14px">
+      <div class="card-head">
+        <h3>新题目</h3>
+        <button id="btnReviewRefresh" class="btn btn-ghost" type="button">刷新</button>
+      </div>
+      <div id="questionList"></div>
+    </div>
+  </section>
+
+</main>
+
+<nav id="tabbar" role="tablist" aria-label="页面切换">
+  <button class="tab active" type="button" data-tab="record" role="tab" aria-selected="true">录音</button>
+  <button class="tab" type="button" data-tab="summary" role="tab" aria-selected="false">总结</button>
+  <button class="tab" type="button" data-tab="mindmap" role="tab" aria-selected="false">导图</button>
+  <button class="tab" type="button" data-tab="review" role="tab" aria-selected="false">复习<span id="tabBadge" class="badge" hidden>0</span></button>
+</nav>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+     基础工具
+     ========================================================= */
+  function $(id) { return document.getElementById(id); }
+
+  var toastEl = $('toast');
+  var toastTimer = null;
+  function showToast(msg, kind) {
+    toastEl.textContent = String(msg || '');
+    toastEl.className = 'show' + (kind ? ' ' + kind : '');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.className = ''; }, 3600);
+  }
+
+  function fmtSec(total) {
+    var s = Math.max(0, Math.floor(Number(total) || 0));
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return (m < 10 ? '0' + m : String(m)) + ':' + (r < 10 ? '0' + r : String(r));
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function errText(e) {
+    if (!e) return '未知错误';
+    if (e.name === 'AbortError') return '请求超时，请确认手机和电脑在同一局域网';
+    var m = String(e.message || '');
+    if (/Failed to fetch|NetworkError|Load failed|load failed|Network request failed/i.test(m)) {
+      return '连不上电脑上的服务，请确认手机和电脑在同一网络';
+    }
+    if (/NotAllowedError|Permission denied|permission/i.test(m)) {
+      return '没有拿到麦克风权限，请在浏览器设置里允许录音后重试';
+    }
+    return m || '未知错误';
+  }
+
+  /* =========================================================
+     访问码：公网访问时服务端要求 6 位数字（data/access.json）
+     第一次输入后记住；地址带 ?pin=123456 时自动记住
+     ========================================================= */
+  var PIN_KEY = 'classroomMobilePin';
+
+  function getPin() {
+    try { return localStorage.getItem(PIN_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function savePin(p) {
+    try { localStorage.setItem(PIN_KEY, p); } catch (e) { /* 隐私模式下忽略 */ }
+  }
+
+  // 从 URL 里 ?pin= 预填（方便电脑上生成带访问码的链接）
+  (function initPinFromUrl() {
+    try {
+      var m = location.search.match(/[?&]pin=(\d{6})/);
+      if (m) savePin(m[1]);
+    } catch (e) { /* ignore */ }
+  })();
+
+  var pinDialog = null;
+
+  // 弹出访问码输入层（页内元素，不阻塞页面渲染）
+  function askPin(message) {
+    if (pinDialog) return pinDialog.promise;
+    var resolveFn = null;
+    var promise = new Promise(function (resolve) { resolveFn = resolve; });
+    pinDialog = { promise: promise };
+
+    var mask = document.createElement('div');
+    mask.setAttribute('role', 'dialog');
+    mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;' +
+      'display:flex;align-items:center;justify-content:center;padding:24px;';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:16px;padding:22px 20px;width:100%;max-width:420px;' +
+      'font-size:18px;line-height:1.5;color:#1f2937;box-shadow:0 10px 30px rgba(0,0,0,.25);';
+
+    var h = document.createElement('div');
+    h.textContent = '需要访问码';
+    h.style.cssText = 'font-size:22px;font-weight:700;margin-bottom:8px;';
+
+    var tip = document.createElement('div');
+    tip.textContent = message || '请输入电脑上 DSH 给出的 6 位访问码';
+    tip.style.cssText = 'color:#4b5563;margin-bottom:14px;';
+
+    var inp = document.createElement('input');
+    inp.type = 'tel';
+    inp.inputMode = 'numeric';
+    inp.maxLength = 6;
+    inp.placeholder = '6 位数字';
+    inp.style.cssText = 'width:100%;box-sizing:border-box;font-size:26px;letter-spacing:6px;text-align:center;' +
+      'padding:12px;border:2px solid #d1d5db;border-radius:12px;margin-bottom:8px;';
+    inp.value = getPin();
+
+    var err = document.createElement('div');
+    err.style.cssText = 'color:#dc2626;min-height:24px;margin-bottom:10px;';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '确定';
+    btn.style.cssText = 'width:100%;min-height:56px;font-size:20px;font-weight:700;border:0;border-radius:12px;' +
+      'background:#2563eb;color:#fff;cursor:pointer;';
+
+    function submit() {
+      var v = String(inp.value || '').replace(/\D/g, '').slice(0, 6);
+      if (!/^\d{6}$/.test(v)) {
+        err.textContent = '请输入 6 位数字';
+        return;
+      }
+      savePin(v);
+      mask.remove();
+      pinDialog = null;
+      resolveFn(v);
+    }
+
+    btn.addEventListener('click', submit);
+    inp.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') submit();
+    });
+
+    box.appendChild(h);
+    box.appendChild(tip);
+    box.appendChild(inp);
+    box.appendChild(err);
+    box.appendChild(btn);
+    mask.appendChild(box);
+    document.body.appendChild(mask);
+    setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
+    return promise;
+  }
+
+  /* =========================================================
+     网络请求（原生 fetch，统一超时与中文错误）
+     ========================================================= */
+  function api(path, opts) {
+    opts = opts || {};
+    var headers = opts.headers || {};
+
+    function run() {
+      var ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var timer = null;
+      if (ctrl) {
+        timer = setTimeout(function () { ctrl.abort(); }, opts.timeoutMs || 15000);
+      }
+      var h = {};
+      for (var k in headers) { if (Object.prototype.hasOwnProperty.call(headers, k)) h[k] = headers[k]; }
+      var pin = getPin();
+      if (pin) h['X-Classroom-Pin'] = pin;
+      var init = {
+        method: opts.method || 'GET',
+        headers: h,
+        body: (opts.body === undefined ? null : opts.body),
+        cache: 'no-store'
+      };
+      if (ctrl) init.signal = ctrl.signal;
+      return fetch(path, init).then(function (res) {
+        return res.text().then(function (txt) {
+          var data = null;
+          if (txt) {
+            try { data = JSON.parse(txt); }
+            catch (e) { data = { ok: false, message: '服务返回的不是合法 JSON' }; }
+          }
+          if (!res.ok || (data && data.ok === false)) {
+            var e = new Error((data && data.message) || ('请求失败（HTTP ' + res.status + '）'));
+            e.status = res.status;
+            e.code = data && data.error;
+            e.data = data;
+            throw e;
+          }
+          return data || {};
+        });
+      }).catch(function (e) {
+        if (e.name === 'AbortError') {
+          var t = new Error('请求超时，请检查手机网络后重试');
+          t.code = 'timeout';
+          throw t;
+        }
+        if (e.code || e.status) throw e;
+        var n = new Error(errText(e));
+        n.code = 'network';
+        throw n;
+      }).then(function (v) {
+        if (timer) clearTimeout(timer);
+        return v;
+      }, function (e) {
+        if (timer) clearTimeout(timer);
+        throw e;
+      });
+    }
+
+    return run().catch(function (e) {
+      if (e.code === 'pin_required') {
+        return askPin(e.message).then(function () { return run(); });
+      }
+      throw e;
+    });
+  }
+
+  /* =========================================================
+     全局状态
+     ========================================================= */
+  var S = {
+    title: '',
+    pendingWrong: 0,
+    asrAvailable: true,
+    recording: false,        // 本页 MediaRecorder 正在录
+    serverRecording: false,  // 服务端记录为录音中（可能来自刷新前的会话）
+    chunks: 0,
+    durationSec: 0
+  };
+
+  var el = {
+    title: $('tbTitle'), state: $('tbState'), dot: $('statusDot'), timer: $('timer'),
+    titleInput: $('titleInput'), startBtn: $('btnStart'), stopBtn: $('btnStop'),
+    gateHint: $('gateHint'), chunkHint: $('chunkHint'), recHint: $('recHint'),
+    liveList: $('liveList'), lastText: $('lastText'), asrOff: $('asrOff'),
+    manualBox: $('manualBox'), manualText: $('manualText'), manualBtn: $('btnManual'),
+    summaryBody: $('summaryBody'), mindmapBody: $('mindmapBody'),
+    mindmapSrc: $('mindmapSrc'), mindmapSrcWrap: $('mindmapSrcWrap'),
+    reviewBanner: $('reviewBanner'), pendingList: $('pendingList'),
+    reviewOk: $('reviewOk'), goRecord: $('btnGoRecord'),
+    questionList: $('questionList'), newQCard: $('newQCard'),
+    tabBadge: $('tabBadge')
+  };
+
+  /* =========================================================
+     页签切换
+     ========================================================= */
+  var TABS = ['record', 'summary', 'mindmap', 'review'];
+  var activeTab = 'record';
+
+  function switchTab(name) {
+    if (TABS.indexOf(name) < 0) return;
+    activeTab = name;
+    var pages = document.querySelectorAll('.page');
+    for (var i = 0; i < pages.length; i++) {
+      var pid = pages[i].getAttribute('data-page');
+      if (pid === name) pages[i].classList.add('active');
+      else pages[i].classList.remove('active');
+    }
+    var tabs = document.querySelectorAll('.tab');
+    for (var j = 0; j < tabs.length; j++) {
+      var on = tabs[j].getAttribute('data-tab') === name;
+      tabs[j].classList.toggle('active', on);
+      tabs[j].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    window.scrollTo(0, 0);
+    if (name === 'summary') loadSummary();
+    if (name === 'mindmap') loadMindmap();
+    if (name === 'review') loadReview();
+  }
+
+  var tabbar = $('tabbar');
+  tabbar.addEventListener('click', function (ev) {
+    var t = ev.target;
+    while (t && t !== tabbar && !t.getAttribute('data-tab')) t = t.parentNode;
+    if (t && t !== tabbar) switchTab(t.getAttribute('data-tab'));
+  });
+
+  /* =========================================================
+     顶部栏 / 计时器
+     ========================================================= */
+  var clockTimer = null;
+  var clockBase = 0;
+  var clockStamp = 0;
+
+  function startClock(baseSec) {
+    clockBase = Math.max(0, Number(baseSec) || 0);
+    clockStamp = Date.now();
+    if (clockTimer) clearInterval(clockTimer);
+    clockTimer = setInterval(tickClock, 500);
+    tickClock();
+  }
+  function tickClock() { el.timer.textContent = fmtSec(elapsedSec()); }
+  function elapsedSec() { return clockBase + Math.floor((Date.now() - clockStamp) / 1000); }
+  function stopClock(showSec) {
+    if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+    if (typeof showSec === 'number') el.timer.textContent = fmtSec(showSec);
+  }
+
+  function updateStatusUI() {
+    var active = S.recording || S.serverRecording;
+    el.dot.classList.toggle('rec', active);
+    el.state.textContent = active ? '录音中' : '已停止';
+  }
+
+  function updateGate() {
+    var blocked = S.pendingWrong > 0;
+    el.startBtn.disabled = blocked;
+    el.gateHint.hidden = !blocked;
+    if (blocked) {
+      el.gateHint.textContent = '还有 ' + S.pendingWrong + ' 道题没改正，先到「复习」页把它们改对，才能开始新录音。';
+    }
+    el.tabBadge.hidden = !blocked;
+    el.tabBadge.textContent = String(S.pendingWrong);
+    el.goRecord.hidden = blocked;
+  }
+
+  function updateAsrUI() {
+    var off = S.asrAvailable === false;
+    el.asrOff.hidden = !off;
+    // 手动兜底框：转写不可用或还没字幕时都可以用
+    el.manualBox.hidden = false;
+  }
+
+  /* =========================================================
+     状态同步
+     ========================================================= */
+  function applyState(d) {
+    if (!d) return;
+    if (d.session && d.session.title) {
+      S.title = d.session.title;
+      el.title.textContent = S.title;
+      if (!el.titleInput.value) el.titleInput.value = S.title;
+    } else {
+      S.title = '';
+      el.title.textContent = '未开始上课';
+    }
+    S.pendingWrong = Number(d.pendingWrong) || 0;
+    S.asrAvailable = (d.asrAvailable !== false);
+    S.chunks = Number(d.chunkCount) || 0;
+    S.serverRecording = !!d.recording;
+    if (typeof d.durationSec === 'number') S.durationSec = d.durationSec;
+    el.chunkHint.textContent = '已上传 ' + S.chunks + ' 片';
+    updateGate();
+    updateAsrUI();
+    updateStatusUI();
+    if (!S.recording && !S.serverRecording) {
+      el.timer.textContent = fmtSec(S.durationSec);
+    }
+    if (S.serverRecording && !S.recording && !clockTimer) {
+      startClock(S.durationSec);
+    }
+    if (!S.serverRecording && !S.recording && clockTimer) {
+      stopClock(S.durationSec);
+    }
+  }
+
+  function loadState() {
+    return api('/api/state', { timeoutMs: 8000 }).then(function (d) {
+      applyState(d);
+      return d;
+    }).catch(function (e) {
+      showToast('读取状态失败：' + errText(e), 'err');
+      return null;
+    });
+  }
+
+  /* =========================================================
+     录音：每 30 秒切一片
+     ========================================================= */
+  var CHUNK_MS = 30000;
+  var MIME_CANDIDATES = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/mp4',
+    'audio/mpeg'
+  ];
+
+  var stream = null;
+  var recorder = null;
+  var chunkTimer = null;
+  var uploadChain = Promise.resolve();
+  var stopResolve = null;
+
+  function pickMime() {
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
+    for (var i = 0; i < MIME_CANDIDATES.length; i++) {
+      try { if (MediaRecorder.isTypeSupported(MIME_CANDIDATES[i])) return MIME_CANDIDATES[i]; } catch (e) {}
+    }
+    return '';
+  }
+
+  // 开一片：stop 之后在 onstop 里立刻起下一片，保证每片独立可解码
+  function beginChunk() {
+    if (!stream || !S.recording) return;
+    var mime = pickMime();
+    var rec;
+    try {
+      rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    } catch (e1) {
+      try { rec = new MediaRecorder(stream); }
+      catch (e2) { showToast('浏览器不支持录音（MediaRecorder 创建失败）', 'err'); S.recording = false; updateStatusUI(); return; }
+    }
+    var parts = [];
+    rec.ondataavailable = function (ev) {
+      if (ev.data && ev.data.size > 0) parts.push(ev.data);
+    };
+    rec.onerror = function (ev) {
+      showToast('录音出错：' + ((ev && ev.error && ev.error.name) || '未知'), 'err');
+    };
+    rec.onstop = function () {
+      var type = rec.mimeType || mime || 'audio/webm';
+      if (parts.length) {
+        var blob = new Blob(parts, { type: type });
+        queueUpload(blob, type);
+      }
+      if (S.recording) {
+        // 立刻重新开始下一片（服务端按片转写）
+        beginChunk();
+      } else if (stopResolve) {
+        var r = stopResolve;
+        stopResolve = null;
+        r();
+      }
+    };
+    recorder = rec;
+    try { rec.start(); }
+    catch (e3) { showToast('开始录音失败：' + errText(e3), 'err'); return; }
+    if (chunkTimer) clearTimeout(chunkTimer);
+    chunkTimer = setTimeout(function () {
+      if (S.recording && recorder === rec && rec.state !== 'inactive') {
+        try { rec.stop(); } catch (e4) {}
+      }
+    }, CHUNK_MS);
+  }
+
+  function queueUpload(blob, mime) {
+    uploadChain = uploadChain.then(function () {
+      return uploadChunk(blob, mime);
+    }).catch(function () { /* 已在 uploadChunk 内提示，队列继续 */ });
+    return uploadChain;
+  }
+
+  function uploadChunk(blob, mime) {
+    var retry = 3;
+    var attempt = 0;
+    function once() {
+      attempt++;
+      return api('/api/audio', {
+        method: 'POST',
+        headers: { 'Content-Type': mime || 'audio/webm' },
+        body: blob,
+        timeoutMs: 45000
+      }).then(function (d) {
+        S.chunks = Number(d.chunk) || (S.chunks + 1);
+        el.chunkHint.textContent = '已上传 ' + S.chunks + ' 片';
+        return d;
+      }).catch(function (e) {
+        if (attempt < retry) {
+          return sleep(900 * attempt).then(once);
+        }
+        showToast('分片上传失败（已重试 3 次）：' + errText(e), 'err');
+        return null;
+      });
+    }
+    return once();
+  }
+
+  function teardownMic() {
+    if (stream) {
+      try {
+        stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+      } catch (e) {}
+      stream = null;
+    }
+    recorder = null;
+  }
+
+  function tryFullscreen() {
+    // 手机浏览器多半不支持自动全屏，失败直接忽略
+    try {
+      var de = document.documentElement;
+      var fn = de.requestFullscreen || de.webkitRequestFullscreen || de.mozRequestFullScreen || de.msRequestFullscreen;
+      if (fn) {
+        var p = fn.call(de);
+        if (p && p.catch) p.catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  function startClass() {
+    if (S.recording) return;
+    var title = String(el.titleInput.value || '').trim();
+    if (!title) {
+      showToast('先输入课堂标题，比如「高等数学 第3讲」', 'err');
+      try { el.titleInput.focus(); } catch (e) {}
+      return;
+    }
+    el.startBtn.disabled = true;
+    el.startBtn.textContent = '正在开始…';
+    var started = false;
+
+    loadState().then(function (st) {
+      // 开始前先查待改正错题，有就切到复习页
+      if (st && Number(st.pendingWrong) > 0) {
+        var err = new Error('还有 ' + st.pendingWrong + ' 道题没改正，先复习');
+        err.code = 'wrong_questions_pending';
+        throw err;
+      }
+      return api('/api/session/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title })
+      });
+    }).then(function (r) {
+      if (r && r.state) applyState(r.state);
+      if (r && r.session && r.session.title) {
+        el.title.textContent = r.session.title;
+        S.title = r.session.title;
+        el.titleInput.value = r.session.title;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        var e = new Error('这个浏览器不支持录音，请用手机自带的 Chrome / Safari / 微信内置浏览器打开');
+        e.code = 'no_mediadevices';
+        throw e;
+      }
+      return navigator.mediaDevices.getUserMedia({ audio: true });
+    }).then(function (s) {
+      stream = s;
+      S.recording = true;
+      S.serverRecording = true;
+      started = true;
+      el.stopBtn.hidden = false;
+      el.startBtn.textContent = '录音中…';
+      tryFullscreen();
+      startClock(0);
+      beginChunk();
+      updateStatusUI();
+      api('/api/focus/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'start' })
+      }).catch(function (e) { showToast('专注开始事件上报失败：' + errText(e), 'err'); });
+      showToast('已开始上课，每 30 秒自动上传一片', 'ok');
+      loadReview(true);
+    }).catch(function (e) {
+      if (started) return;
+      if (e && e.code === 'wrong_questions_pending') {
+        switchTab('review');
+        showToast(errText(e), 'err');
+        loadReview();
+        return;
+      }
+      showToast('开始上课失败：' + errText(e), 'err');
+    }).then(function () {
+      el.startBtn.textContent = '开始上课';
+      el.startBtn.disabled = (S.pendingWrong > 0);
+      updateGate();
+    });
+  }
+
+  function stopClass() {
+    if (!S.recording && !S.serverRecording) return;
+    var wasLocal = S.recording;
+    S.recording = false;
+    if (chunkTimer) { clearTimeout(chunkTimer); chunkTimer = null; }
+    var sec = clockTimer ? elapsedSec() : (Number(S.durationSec) || 0);
+    stopClock(sec);
+    el.stopBtn.hidden = true;
+    updateStatusUI();
+
+    var finalStop = Promise.resolve();
+    if (wasLocal && recorder) {
+      finalStop = new Promise(function (resolve) {
+        stopResolve = resolve;
+        try {
+          if (recorder.state !== 'inactive') recorder.stop();
+          else { stopResolve = null; resolve(); }
+        } catch (e) { stopResolve = null; resolve(); }
+        setTimeout(function () { if (stopResolve) { stopResolve = null; resolve(); } }, 6000);
+      });
+    }
+
+    el.stopBtn.hidden = true;
+    showToast('正在结束，最后一片上传中…');
+
+    finalStop.then(function () { return uploadChain; }).then(function () {
+      teardownMic();
+      return api('/api/focus/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'stop' })
+      });
+    }).then(function () {
+      S.serverRecording = false;
+      return api('/api/state', { timeoutMs: 8000 });
+    }).then(function (d) {
+      applyState(d);
+      stopClock(Number(d.durationSec) || sec);
+      showToast('已结束上课，服务端正在后台转写', 'ok');
+    }).catch(function (e) {
+      S.serverRecording = false;
+      teardownMic();
+      updateStatusUI();
+      showToast('结束上课时出错：' + errText(e) + '（会继续尝试同步状态）', 'err');
+      loadState();
+    });
+  }
+
+  el.startBtn.addEventListener('click', startClass);
+  el.stopBtn.addEventListener('click', stopClass);
+  el.titleInput.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); startClass(); }
+  });
+
+  /* =========================================================
+     专注记录：页面可见性变化只上报，不做拦截
+     ========================================================= */
+  document.addEventListener('visibilitychange', function () {
+    if (!S.recording && !S.serverRecording) return;
+    var type = document.hidden ? 'leave' : 'return';
+    api('/api/focus/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type })
+    }).catch(function () { /* 静默：不发提示打断课堂 */ });
+  });
+
+  /* =========================================================
+     实时字幕：每 3 秒 GET /api/live
+     ========================================================= */
+  var liveBusy = false;
+
+  function renderLive(d) {
+    var segs = (d && d.segments) || [];
+    if (!segs.length) {
+      if (!el.liveList.querySelector('.live-item')) {
+        el.liveList.innerHTML = '<div class="empty">还没有字幕。开始上课后每 3 秒刷新一次。</div>';
+      }
+    } else {
+      var html = '';
+      for (var i = 0; i < segs.length; i++) {
+        html += '<div class="live-item"><span class="t">' + escapeHtml(segs[i].t || '') + '</span><span>' + escapeHtml(segs[i].text || '') + '</span></div>';
+      }
+      el.liveList.innerHTML = html;
+    }
+    if (d && d.lastText) {
+      el.lastText.hidden = false;
+      el.lastText.textContent = '最近一段：' + d.lastText;
+    } else {
+      el.lastText.hidden = true;
+    }
+    if (typeof d.asrAvailable === 'boolean' && d.asrAvailable !== S.asrAvailable) {
+      S.asrAvailable = d.asrAvailable;
+      updateAsrUI();
+    }
+    if (typeof d.pending === 'number' && d.pending > 0) {
+      el.recHint.textContent = '还有 ' + d.pending + ' 片在排队转写';
+    } else {
+      el.recHint.textContent = '每 30 秒自动切一片上传';
+    }
+    if (d && d.message) {
+      el.recHint.textContent = d.message;
+    }
+  }
+
+  function pollLive(manual) {
+    if (liveBusy) return Promise.resolve();
+    liveBusy = true;
+    return api('/api/live', { timeoutMs: 8000 }).then(function (d) {
+      renderLive(d);
+      return d;
+    }).catch(function (e) {
+      if (manual) showToast('字幕刷新失败：' + errText(e), 'err');
+      return null;
+    }).then(function (v) {
+      liveBusy = false;
+      return v;
+    });
+  }
+
+  $('btnLiveRefresh').addEventListener('click', function () { pollLive(true); });
+
+  setInterval(function () {
+    if (document.hidden) return;
+    if (activeTab !== 'record' && !S.recording) return;
+    pollLive(false);
+  }, 3000);
+
+  /* =========================================================
+     手动文字兜底
+     ========================================================= */
+  el.manualBtn.addEventListener('click', function () {
+    var text = String(el.manualText.value || '').trim();
+    if (!text) { showToast('先输入要补充的文字', 'err'); return; }
+    el.manualBtn.disabled = true;
+    api('/api/transcript/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text })
+    }).then(function (d) {
+      el.manualText.value = '';
+      showToast('已追加 ' + ((d && d.chars) || text.length) + ' 字到转写记录', 'ok');
+    }).catch(function (e) {
+      showToast('提交失败：' + errText(e), 'err');
+    }).then(function () {
+      el.manualBtn.disabled = false;
+    });
+  });
+
+  /* =========================================================
+     总结页：简易 Markdown 渲染
+     ========================================================= */
+  function inlineMd(s) {
+    return escapeHtml(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" rel="noreferrer">$1</a>');
+  }
+
+  function renderMarkdown(md) {
+    var lines = String(md || '').split(/\r?\n/);
+    var out = '';
+    var inCode = false;
+    var codeBuf = [];
+    var listType = null; // 'ul' | 'ol'
+
+    function closeList() {
+      if (listType) { out += '</' + listType + '>'; listType = null; }
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      var raw = lines[i];
+      var line = raw.replace(/\s+$/, '');
+
+      if (/^\s*```/.test(line)) {
+        if (!inCode) {
+          closeList();
+          inCode = true;
+          codeBuf = [];
+        } else {
+          inCode = false;
+          out += '<pre><code>' + escapeHtml(codeBuf.join('\n')) + '</code></pre>';
+          codeBuf = [];
+        }
+        continue;
+      }
+      if (inCode) { codeBuf.push(raw); continue; }
+
+      if (!line.trim()) { closeList(); continue; }
+
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        closeList();
+        var lv = Math.min(4, h[1].length);
+        out += '<h' + lv + '>' + inlineMd(h[2]) + '</h' + lv + '>';
+        continue;
+      }
+      if (/^\s*([-*_])\s*\1\s*\1[\s\-*_]*$/.test(line)) { closeList(); out += '<hr>'; continue; }
+      if (/^\s*>\s?/.test(line)) {
+        closeList();
+        out += '<blockquote>' + inlineMd(line.replace(/^\s*>\s?/, '')) + '</blockquote>';
+        continue;
+      }
+      var ol = line.match(/^\s*\d+[.、)]\s+(.*)$/);
+      if (ol) {
+        if (listType !== 'ol') { closeList(); out += '<ol>'; listType = 'ol'; }
+        out += '<li>' + inlineMd(ol[1]) + '</li>';
+        continue;
+      }
+      var ul = line.match(/^\s*[-*+]\s+(.*)$/);
+      if (ul) {
+        if (listType !== 'ul') { closeList(); out += '<ul>'; listType = 'ul'; }
+        out += '<li>' + inlineMd(ul[1]) + '</li>';
+        continue;
+      }
+      closeList();
+      out += '<p>' + inlineMd(line.trim()) + '</p>';
+    }
+    if (inCode) out += '<pre><code>' + escapeHtml(codeBuf.join('\n')) + '</code></pre>';
+    closeList();
+    return out || '<div class="empty">（空）</div>';
+  }
+
+  var summaryCache = null;
+
+  function loadSummary() {
+    el.summaryBody.innerHTML = '<div class="empty">加载中…</div>';
+    return api('/api/summary', { timeoutMs: 12000 }).then(function (d) {
+      summaryCache = d;
+      var md = String((d && d.summary) || '').trim();
+      if (md) {
+        el.summaryBody.innerHTML = renderMarkdown(md);
+      } else {
+        el.summaryBody.innerHTML = '<div class="empty">还没有总结。先在 DSH 里说：生成这节课的总结和导图</div>';
+      }
+      return d;
+    }).catch(function (e) {
+      el.summaryBody.innerHTML = '<div class="empty">总结加载失败：' + escapeHtml(errText(e)) + '</div>';
+      return null;
+    });
+  }
+
+  $('btnSummaryRefresh').addEventListener('click', loadSummary);
+
+  /* =========================================================
+     导图页：自己解析 mermaid mindmap 的缩进层级，不引库
+     ========================================================= */
+  function cleanMindLabel(text) {
+    var s = String(text || '').trim();
+    s = s.replace(/\s*:::.*$/, '');
+    if (/^mindmap\b/i.test(s)) return '';
+    // 去掉 mermaid 节点形状标记：((..)) [[..]] {{..}} [..] (..) ))..(( )..(
+    var m = s.match(/^[A-Za-z0-9_\-\u4e00-\u9fa5]*\s*(\(\(|\[\[|\{\{|\(\[|\[\(|\[|\{|\(|\)\)|\))([\s\S]*?)(\)\)|\]\]|\}\}|\]\)|\)\]|\]|\}|\))\s*$/);
+    if (m) s = m[2];
+    s = s.replace(/^["']+/, '').replace(/["']+$/, '');
+    return s.trim();
+  }
+
+  function parseMindmap(src) {
+    var lines = String(src || '').split(/\r?\n/);
+    var dummy = { label: '导图', children: [], depth: 0 };
+    var top = [];
+    var stack = []; // { indent, node }
+
+    for (var i = 0; i < lines.length; i++) {
+      var raw = lines[i];
+      if (!raw.trim()) continue;
+      if (/^\s*(```|%%|mindmap\b)/i.test(raw)) continue;
+      var lead = raw.match(/^\s*/)[0].replace(/\t/g, '  ');
+      var indent = lead.length;
+      var label = cleanMindLabel(raw);
+      if (!label) continue;
+      var node = { label: label, children: [], depth: 0 };
+      while (stack.length && stack[stack.length - 1].indent >= indent) stack.pop();
+      if (!stack.length) {
+        top.push(node);
+        node.depth = 0;
+      } else {
+        var parent = stack[stack.length - 1].node;
+        parent.children.push(node);
+        node.depth = parent.depth + 1;
+      }
+      stack.push({ indent: indent, node: node });
+    }
+
+    if (!top.length) return null;
+    if (top.length === 1) return top[0];
+    dummy.children = top;
+    for (var k = 0; k < top.length; k++) bumpDepth(top[k], 1);
+    return dummy;
+  }
+
+  function bumpDepth(node, d) {
+    node.depth = d;
+    for (var i = 0; i < node.children.length; i++) bumpDepth(node.children[i], d + 1);
+  }
+
+  function treeHtml(node) {
+    var cls = 'node d' + Math.min(3, node.depth);
+    var html = '<li><span class="' + cls + '">' + escapeHtml(node.label) + '</span>';
+    if (node.children && node.children.length) {
+      html += '<ul>';
+      for (var i = 0; i < node.children.length; i++) html += treeHtml(node.children[i]);
+      html += '</ul>';
+    }
+    html += '</li>';
+    return html;
+  }
+
+  function loadMindmap() {
+    el.mindmapBody.innerHTML = '<div class="empty">加载中…</div>';
+    el.mindmapSrcWrap.hidden = true;
+    return api('/api/summary', { timeoutMs: 12000 }).then(function (d) {
+      var src = String((d && d.mindmap) || '').trim();
+      if (!src) {
+        el.mindmapBody.innerHTML = '<div class="empty">还没有导图。先在 DSH 里说：生成这节课的总结和导图</div>';
+        return d;
+      }
+      var tree = parseMindmap(src);
+      if (tree) {
+        el.mindmapBody.innerHTML = '<ul class="tree">' + treeHtml(tree) + '</ul>';
+      } else {
+        el.mindmapBody.innerHTML = '<div class="empty">导图解析不出结构，可以展开下面「查看源码」查看原文。</div>';
+      }
+      el.mindmapSrc.textContent = src;
+      el.mindmapSrcWrap.hidden = false;
+      return d;
+    }).catch(function (e) {
+      el.mindmapBody.innerHTML = '<div class="empty">导图加载失败：' + escapeHtml(errText(e)) + '</div>';
+      return null;
+    });
+  }
+
+  $('btnMindmapRefresh').addEventListener('click', loadMindmap);
+
+  /* =========================================================
+     复习页：未改正错题门控
+     ========================================================= */
+  var reviewLoading = false;
+  var pendingData = [];
+  var questionData = [];
+
+  function quizCard(item, isPending) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qcard' + (isPending ? ' wrong' : '');
+    var status = '';
+    if (isPending) {
+      status = item.status === 'wrong'
+        ? '上次答错' + (item.note ? '：' + item.note : '')
+        : '已提交，等待批改';
+    }
+    var html = '';
+    html += '<div class="qhead"><div class="qno">' + escapeHtml(String(item.index)) + '</div>';
+    html += '<div class="qtxt">' + escapeHtml(item.question || '') + '</div></div>';
+    if (isPending) {
+      if (item.lastAnswer) {
+        html += '<div class="metaline">上次回答：' + escapeHtml(item.lastAnswer) + '</div>';
+      }
+      html += '<div class="metaline">' + escapeHtml(status) + '</div>';
+    } else {
+      html += '<div class="metaline">还没作答</div>';
+    }
+    html += '<textarea class="textarea" rows="3" placeholder="写出你的答案…"></textarea>';
+    html += '<button class="btn btn-secondary" type="button">提交答案</button>';
+    html += '<div class="ans-status"></div>';
+    wrap.innerHTML = html;
+
+    var ta = wrap.querySelector('textarea');
+    var btn = wrap.querySelector('button');
+    var st = wrap.querySelector('.ans-status');
+    btn.addEventListener('click', function () {
+      var answer = String(ta.value || '').trim();
+      if (!answer) { showToast('先写答案再提交', 'err'); try { ta.focus(); } catch (e) {} return; }
+      btn.disabled = true;
+      btn.textContent = '提交中…';
+      api('/api/quiz/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: item.index, answer: answer })
+      }).then(function (d) {
+        ta.disabled = true;
+        btn.textContent = '已提交';
+        st.className = 'ans-status wait';
+        st.textContent = '已提交，等待 DSH 批改';
+        if (typeof d.pending === 'number') {
+          S.pendingWrong = d.pending;
+          updateGate();
+        }
+        showToast('答案已提交，等 DSH 批改', 'ok');
+        loadReview();
+      }).catch(function (e) {
+        btn.disabled = false;
+        btn.textContent = '提交答案';
+        showToast('提交失败：' + errText(e), 'err');
+      });
+    });
+    return wrap;
+  }
+
+  function renderReview() {
+    pendingData = pendingData || [];
+    questionData = questionData || [];
+
+    if (pendingData.length) {
+      el.reviewBanner.hidden = false;
+      el.reviewBanner.textContent = '还有 ' + pendingData.length + ' 道题没改正，先复习';
+      el.reviewOk.hidden = true;
+      el.goRecord.hidden = true;
+      el.pendingList.innerHTML = '';
+      for (var i = 0; i < pendingData.length; i++) {
+        el.pendingList.appendChild(quizCard(pendingData[i], true));
+      }
+    } else {
+      el.reviewBanner.hidden = true;
+      el.pendingList.innerHTML = '';
+      el.reviewOk.hidden = false;
+      el.goRecord.hidden = (S.pendingWrong > 0);
+    }
+
+    var fresh = [];
+    for (var j = 0; j < questionData.length; j++) {
+      if (!questionData[j].answered) fresh.push(questionData[j]);
+    }
+    el.newQCard.hidden = !fresh.length;
+    el.questionList.innerHTML = '';
+    for (var k = 0; k < fresh.length; k++) {
+      el.questionList.appendChild(quizCard(fresh[k], false));
+    }
+
+    S.pendingWrong = pendingData.length;
+    updateGate();
+  }
+
+  function loadReview(quiet) {
+    if (reviewLoading) return Promise.resolve();
+    reviewLoading = true;
+    return Promise.all([
+      api('/api/quiz/pending', { timeoutMs: 10000 }).catch(function () { return null; }),
+      api('/api/quiz/questions', { timeoutMs: 10000 }).catch(function () { return null; })
+    ]).then(function (res) {
+      var p = res[0];
+      var q = res[1];
+      if (p && p.pending) pendingData = p.pending;
+      if (q && q.questions) questionData = q.questions;
+      if (!p && !q) {
+        if (!quiet) showToast('复习数据加载失败，下拉或点刷新重试', 'err');
+        return;
+      }
+      if (p && typeof p.count === 'number') S.pendingWrong = p.count;
+      else S.pendingWrong = pendingData.length;
+      renderReview();
+    }).then(function () {
+      reviewLoading = false;
+    });
+  }
+
+  // 轮询时避免打断正在输入
+  function reviewTyping() {
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT')) return true;
+    var tas = document.querySelectorAll('#pendingList textarea, #questionList textarea');
+    for (var i = 0; i < tas.length; i++) {
+      if (String(tas[i].value || '').trim()) return true;
+    }
+    return false;
+  }
+
+  setInterval(function () {
+    if (document.hidden || activeTab !== 'review') return;
+    if (reviewTyping()) return;
+    loadReview(true);
+  }, 5000);
+
+  $('btnGoRecord').addEventListener('click', function () {
+    switchTab('record');
+    try { el.titleInput.focus(); } catch (e) {}
+  });
+  $('btnReviewRefresh').addEventListener('click', function () { loadReview(); });
+
+  /* =========================================================
+     初始化
+     ========================================================= */
+  function init() {
+    updateGate();
+    updateStatusUI();
+    updateAsrUI();
+    loadState().then(function () { loadReview(true); });
+    // 录音中切回页面再拉一次字幕
+    setInterval(function () {
+      if (document.hidden) return;
+      if (!S.recording && !S.serverRecording) return;
+      if (activeTab === 'record') return; // 录音页已有 3 秒轮询
+      pollLive(false);
+    }, 12000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
