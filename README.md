@@ -39,6 +39,17 @@ dsh plugin --profile desktop add github:chengyu-xin1/dsh-classroom-mobile
    （`$env:USERPROFILE\.dsh\profiles\desktop\package.json`），加 `"dsh-classroom-mobile"`。
 4. **重启 DSH**，插件 `apply()` 会自动在 `0.0.0.0:8765` 起服务（被占则 8766 起递增）。
 
+### 换电脑 / 给别人装：先跑环境准备
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+```
+
+它会依次检查并准备：Node / Python / ffmpeg、安装 `faster-whisper`（清华源）、下载
+Whisper `small` 模型（约 460 MB）、下载 `cloudflared`（公网地址用）。
+任何一步失败都不会让插件不可用，只影响对应能力（没有 faster-whisper 就手动粘贴文字，
+没有 cloudflared 就只用局域网）。可用 `-SkipModel`、`-SkipCloudflared` 跳过下载。
+
 ## 手机访问（公网 HTTPS 隧道，任何网络都能用 —— 推荐）
 
 插件启动时会用 `cloudflared` 建一条临时 HTTPS 隧道，手机**用流量、或在别的 Wi‑Fi 下**也能打开：
