@@ -1,0 +1,16 @@
+# 运行时数据：录音/转写/模型，目录可重建，不入库
+data/
+# 日志
+*.log
+# 依赖（本插件零依赖，保留以防将来）
+node_modules/
+# 临时文件
+*.tmp
+*~
+.DS_Store
+# Python 缓存
+__pycache__/
+*.pyc
+# 公网隧道二进制（约 53MB，按 README 下载，不入库）
+bin/
+
