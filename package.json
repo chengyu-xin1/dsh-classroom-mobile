@@ -1,0 +1,53 @@
+{
+  "name": "dsh-classroom-mobile",
+  "version": "0.1.0",
+  "description": "Classroom study plugin for DeepSeek Harness: record audio in a phone browser, transcribe it locally, then generate summaries, mind maps, quizzes with a wrong-question gate, and focus reports.",
+  "type": "module",
+  "main": "src/index.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "classroom",
+    "education",
+    "pwa",
+    "whisper"
+  ],
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.1.0-rc.6 <0.4.0"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "manifestVersion": 1
+  },
+  "files": [
+    "src/index.js",
+    "src/config.js",
+    "src/store.js",
+    "src/asr.js",
+    "src/server.js",
+    "src/tunnel.js",
+    "src/tools.js",
+    "public/index.html",
+    "scripts/transcribe.py",
+    "scripts/download_model.py",
+    "scripts/dev-server.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node scripts/dev-server.js",
+    "check": "node --check src/index.js"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": ">=0.1.0"
+  }
+}
