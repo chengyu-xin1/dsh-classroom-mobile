@@ -17,6 +17,16 @@
 
 ## 安装
 
+### 从 DSH 插件市场安装（审核通过后）
+
+在市场卡片上点「安装」，或在命令行：
+
+```powershell
+dsh plugin --profile desktop add github:chengyu-xin1/dsh-classroom-mobile
+```
+
+### 手动安装（本机开发/离线）
+
 1. 把整个目录放到 `D:\dsh-classroom-mobile`（数据也会写在这里的 `data\` 下）。
 2. 复制到 DSH profile 的插件目录：
 
@@ -39,12 +49,14 @@ https://xxxx-xxxx-xxxx.trycloudflare.com
 
 HTTPS 还解决了手机浏览器「非安全上下文不能调用麦克风」的限制，录音可以直接用。
 
-- **首次准备**：`bin\cloudflared.exe` 约 53 MB，仓库不打包，下载一次即可：
+- **首次准备**：`cloudflared.exe` 约 53 MB，仓库不打包。插件第一次启动会自动下载到
+  `data\bin\cloudflared.exe`（优先 ghfast 镜像，官方源国内较慢）；下载失败时页面照常可用，
+  只是没有公网地址。也可以手动放一份：
 
   ```powershell
-  New-Item -ItemType Directory -Force D:\dsh-classroom-mobile\bin | Out-Null
+  New-Item -ItemType Directory -Force D:\dsh-classroom-mobile\data\bin | Out-Null
   Invoke-WebRequest -Uri https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe `
-    -OutFile D:\dsh-classroom-mobile\bin\cloudflared.exe
+    -OutFile D:\dsh-classroom-mobile\data\bin\cloudflared.exe
   ```
 
 - **访问码**：非本机访问（手机/公网）都要 6 位访问码，存在 `data\access.json`。
