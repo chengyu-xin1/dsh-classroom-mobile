@@ -42,6 +42,7 @@
     "scripts/dev-server.js",
     "cordis.patch.yml",
     "README.md",
+    "INSTALL-others.md",
     "LICENSE"
   ],
   "scripts": {
