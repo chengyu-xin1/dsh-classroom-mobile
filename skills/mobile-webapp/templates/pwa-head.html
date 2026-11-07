@@ -1,0 +1,55 @@
+<!-- 把这一段放进页面 <head>，并让服务器提供 /manifest.webmanifest、/sw.js、/icon-*.png -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="课堂学习">
+
+<!-- 放在 </body> 前：注册 SW + 安装到主屏幕按钮 -->
+<script>
+(function () {
+  try {
+    var secure = location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    if ('serviceWorker' in navigator && secure) navigator.serviceWorker.register('/sw.js').catch(function () {});
+  } catch (e) {}
+
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferred = e;
+    showInstall('安装到主屏幕');
+  });
+  window.addEventListener('appinstalled', hideInstall);
+
+  function showInstall(label) {
+    if (document.getElementById('pwa-install')) return;
+    var b = document.createElement('button');
+    b.id = 'pwa-install';
+    b.textContent = '📲 ' + label;
+    b.style.cssText = 'position:fixed;right:14px;bottom:84px;z-index:9999;padding:12px 16px;border:0;border-radius:24px;background:#1f3a8a;color:#fff;font-size:16px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+    b.onclick = async function () {
+      if (deferred) {
+        deferred.prompt();
+        try { await deferred.userChoice; } catch (e) {}
+        deferred = null;
+        hideInstall();
+        return;
+      }
+      alert('iPhone / iPad：点浏览器底部「分享」→「添加到主屏幕」。\n安卓：点浏览器右上角菜单 →「安装应用 / 添加到主屏幕」。');
+    };
+    document.body.appendChild(b);
+  }
+  function hideInstall() {
+    var el = document.getElementById('pwa-install');
+    if (el) el.remove();
+  }
+  function standalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  window.addEventListener('load', function () {
+    if (standalone()) return;
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) showInstall('添加到主屏幕');
+  });
+})();
+</script>
