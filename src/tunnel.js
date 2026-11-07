@@ -5,10 +5,10 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  CLOUDFLARED_EXE, TMP_DIR, TUNNEL_ENABLED, TUNNEL_MAX_RESTARTS, TUNNEL_START_TIMEOUT_MS,
+  CLOUDFLARED_EXE, TMP_DIR, TUNNEL_ENABLED, TUNNEL_MAX_RESTARTS, TUNNEL_PROTOCOL, TUNNEL_START_TIMEOUT_MS,
 } from './config.js';
 
-const URL_RE = /https:\/\/[a-z0-9][a-z0-9-]*\.trycloudflare\.com/i;
+const URL_RE = /https:\/\/(?!api\.|update\.|www\.|developers\.|blog\.)[a-z0-9][a-z0-9-]*\.trycloudflare\.com/gi;
 
 const state = {
   enabled: !!TUNNEL_ENABLED,
@@ -150,6 +150,7 @@ function spawnCloudflared() {
   const args = [
     'tunnel',
     '--no-autoupdate',
+    '--protocol', TUNNEL_PROTOCOL,
     '--url', `http://127.0.0.1:${targetPort}`,
   ];
   try {
@@ -185,9 +186,10 @@ function spawnCloudflared() {
   pollTimer = setInterval(() => {
     const text = stripAnsi(readLogTail(state.logFile));
     if (!text) return;
-    const m = text.match(URL_RE);
-    if (m && m[0] !== state.url) {
-      setState({ status: 'ready', url: m[0], error: '' });
+    const matches = text.match(URL_RE) || [];
+    const url = matches.length ? matches[matches.length - 1] : '';
+    if (url && url !== state.url) {
+      setState({ status: 'ready', url, error: '' });
     }
   }, 500);
 
