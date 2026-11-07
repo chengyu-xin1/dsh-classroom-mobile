@@ -14,3 +14,4 @@ __pycache__/
 # 公网隧道二进制（约 53MB，按 README 下载，不入库）
 bin/
 
+dsh-classroom-mobile-main/
