@@ -4,7 +4,7 @@ import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  HOST, PORT_START, PORT_END, PUBLIC_DIR, MAX_AUDIO_BYTES, MAX_JSON_BYTES,
+  HOST, PORT_START, PORT_END, PUBLIC_DIR, MAX_AUDIO_BYTES, MAX_JSON_BYTES, PIN_REQUIRED,
 } from './config.js';
 import * as store from './store.js';
 import { asrStatus, detectAsr, enqueueChunk, queueLength } from './asr.js';
@@ -23,6 +23,23 @@ function extFor(contentType) {
     if (re.test(contentType || '')) return ext;
   }
   return '.webm';
+}
+
+const AUDIO_EXTS = new Set(['.webm', '.ogg', '.oga', '.m4a', '.mp3', '.wav', '.mp4', '.aac', '.flac', '.opus']);
+
+// 上传文件名只用于记录与显示：去掉路径、控制字符，限制长度
+function cleanUploadName(name) {
+  return String(name || '')
+    .replace(/[\\/:*?"<>|\r\n\t]/g, '-')
+    .replace(/[\u200b-\u200d\ufeff]/g, '')
+    .trim()
+    .slice(0, 120);
+}
+
+function safeSlug(name) {
+  const base = String(name || '').replace(/\.[^.]+$/, '');
+  const slug = base.replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  return slug || 'audio';
 }
 
 function sendJSON(res, status, obj) {
@@ -159,6 +176,67 @@ async function handle(req, res) {
     return;
   }
 
+  // PWA：主屏幕图标 / 全屏打开
+  if (method === 'GET' && p === '/manifest.webmanifest') {
+    const manifest = {
+      name: '课堂学习',
+      short_name: '课堂学习',
+      description: '手机录音 → 转写 → 总结/导图/题目',
+      start_url: '/',
+      scope: '/',
+      display: 'standalone',
+      orientation: 'portrait',
+      background_color: '#f2f5fa',
+      theme_color: '#1f3a8a',
+      lang: 'zh-CN',
+      icons: [
+        { src: '/icon-180.png', sizes: '180x180', type: 'image/png' },
+        { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      ],
+    };
+    const body = JSON.stringify(manifest);
+    res.writeHead(200, {
+      'Content-Type': 'application/manifest+json; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Access-Control-Allow-Origin': '*',
+      'Content-Length': Buffer.byteLength(body),
+    });
+    res.end(body);
+    return;
+  }
+
+  if (method === 'GET' && p === '/sw.js') {
+    try {
+      const js = await fsp.readFile(path.join(PUBLIC_DIR, 'sw.js'), 'utf8');
+      res.writeHead(200, {
+        'Content-Type': 'text/javascript; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Service-Worker-Allowed': '/',
+        'Content-Length': Buffer.byteLength(js),
+      });
+      res.end(js);
+    } catch {
+      sendError(res, 404, 'not_found', 'sw.js 不存在');
+    }
+    return;
+  }
+
+  if (method === 'GET' && /^\/icon-(180|192|512)\.png$/.test(p)) {
+    try {
+      const buf = await fsp.readFile(path.join(PUBLIC_DIR, path.basename(p)));
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=86400',
+        'Content-Length': buf.length,
+      });
+      res.end(buf);
+    } catch {
+      sendError(res, 404, 'not_found', '图标不存在');
+    }
+    return;
+  }
+
   if (method === 'GET' && p === '/api/health') {
     sendJSON(res, 200, { ok: true, up: true, port: handle.port || null, time: new Date().toISOString() });
     return;
@@ -167,12 +245,14 @@ async function handle(req, res) {
   // 非本机访问（手机 / 公网隧道）需要 6 位访问码，防止地址外泄后被陌生人使用。
   // 注意：cloudflared 在电脑本机转发，socket 会显示 127.0.0.1，因此同时检查
   // Cloudflare 加的 cf-connecting-ip / cf-ray / x-forwarded-for 头来判断是否走公网。
+  // 访问码默认关闭（PIN_REQUIRED=false），手机打开地址直接用；
+  // 需要保护时设环境变量 DSH_CLASSROOM_PIN=1，非本机/公网请求才要求 6 位码。
   const remote = req.socket.remoteAddress || '';
   const loopback = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
   const viaProxy = Boolean(
     req.headers['cf-connecting-ip'] || req.headers['cf-ray'] || req.headers['x-forwarded-for'],
   );
-  if ((!loopback || viaProxy) && p.startsWith('/api/')) {
+  if (PIN_REQUIRED && (!loopback || viaProxy) && p.startsWith('/api/')) {
     const given = String(req.headers['x-classroom-pin'] || url.searchParams.get('pin') || '');
     const pin = await store.ensureAccessPin();
     if (given !== pin) {
@@ -183,7 +263,9 @@ async function handle(req, res) {
 
   if (method === 'GET' && p === '/api/state') {
     const state = await buildState();
-    sendJSON(res, 200, { ...state, port: handle.port || null, tunnel: getTunnelState() });
+    sendJSON(res, 200, {
+      ...state, port: handle.port || null, pinRequired: PIN_REQUIRED, tunnel: getTunnelState(),
+    });
     return;
   }
 
@@ -247,8 +329,19 @@ async function handle(req, res) {
     const meta = (await store.readMeta(session)) || {};
     const chunks = Array.isArray(meta.chunks) ? meta.chunks : [];
     const index = chunks.length;
-    const ext = extFor(req.headers['content-type']);
-    const file = `chunk-${String(index).padStart(3, '0')}${ext}`;
+    const rawName = String(req.headers['x-file-name'] || '');
+    let originalName = '';
+    try { originalName = rawName ? decodeURIComponent(rawName) : ''; } catch { originalName = rawName; }
+    originalName = cleanUploadName(originalName);
+    const isUpload = Boolean(originalName);
+    let ext = extFor(req.headers['content-type']);
+    if (isUpload) {
+      const nameExt = path.extname(originalName).toLowerCase();
+      if (AUDIO_EXTS.has(nameExt)) ext = nameExt;
+    }
+    const file = isUpload
+      ? `upload-${String(index).padStart(3, '0')}-${safeSlug(originalName)}${ext}`
+      : `chunk-${String(index).padStart(3, '0')}${ext}`;
     await fsp.writeFile(path.join(pth.audio, file), buf);
 
     const now = new Date().toISOString();
@@ -261,6 +354,8 @@ async function handle(req, res) {
       status: 'pending',
       offsetSec: 0,
       durationSec: 0,
+      kind: isUpload ? 'upload' : 'chunk',
+      originalName: originalName || undefined,
     });
     const rec = meta.recording || {};
     await store.updateMeta(session, {
@@ -273,7 +368,10 @@ async function handle(req, res) {
 
     const fresh = await store.getCurrentSession();
     enqueueChunk(fresh || session, { index, file, size: buf.length });
-    sendJSON(res, 200, { ok: true, chunk: index, file, size: buf.length, queued: true });
+    sendJSON(res, 200, {
+      ok: true, chunk: index, file, size: buf.length, queued: true, uploaded: isUpload,
+      originalName: originalName || undefined,
+    });
     return;
   }
 
@@ -306,7 +404,8 @@ async function handle(req, res) {
   if (method === 'GET' && p === '/api/summary') {
     const session = await store.getCurrentSession();
     const empty = {
-      ok: true, title: null, summary: '', mindmap: '', summaryUpdatedAt: null, mindmapUpdatedAt: null,
+      ok: true, title: null, summary: '', mindmap: '', keypoints: '', mindmapType: 'mindmap',
+      summaryUpdatedAt: null, mindmapUpdatedAt: null, keypointsUpdatedAt: null,
     };
     if (!session) {
       sendJSON(res, 200, empty);
@@ -315,8 +414,10 @@ async function handle(req, res) {
     const pth = store.sessionPaths(session.dir);
     let summary = '';
     let mindmap = '';
+    let keypoints = '';
     let summaryUpdatedAt = null;
     let mindmapUpdatedAt = null;
+    let keypointsUpdatedAt = null;
     try {
       summary = await fsp.readFile(pth.summary, 'utf8');
       summaryUpdatedAt = (await fsp.stat(pth.summary)).mtime.toISOString();
@@ -325,8 +426,15 @@ async function handle(req, res) {
       mindmap = await fsp.readFile(pth.mindmap, 'utf8');
       mindmapUpdatedAt = (await fsp.stat(pth.mindmap)).mtime.toISOString();
     } catch { /* 文件不存在 */ }
+    try {
+      keypoints = await fsp.readFile(pth.keypoints, 'utf8');
+      keypointsUpdatedAt = (await fsp.stat(pth.keypoints)).mtime.toISOString();
+    } catch { /* 文件不存在 */ }
+    const m = mindmap.match(/^\s*%%\s*type\s*:\s*([a-z]+)/i);
+    const mindmapType = m ? m[1].toLowerCase() : 'mindmap';
     sendJSON(res, 200, {
-      ok: true, title: session.title, summary, mindmap, summaryUpdatedAt, mindmapUpdatedAt,
+      ok: true, title: session.title, summary, mindmap, keypoints, mindmapType,
+      summaryUpdatedAt, mindmapUpdatedAt, keypointsUpdatedAt,
     });
     return;
   }
