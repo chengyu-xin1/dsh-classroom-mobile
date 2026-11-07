@@ -9,7 +9,7 @@ import {
   parseTranscript, readQuiz, pendingWrong, rewriteQuestions, appendGrade,
   readFocus, summarizeFocus, appendFocus, updateMeta, mmss, isoNow, ensureAccessPin,
 } from './store.js';
-import { POMODORO_MINUTES, SESSIONS_ROOT, PORT_START } from './config.js';
+import { POMODORO_MINUTES, SESSIONS_ROOT, PORT_START, PIN_REQUIRED } from './config.js';
 import { getTunnelState } from './tunnel.js';
 
 const textOut = {
@@ -70,7 +70,7 @@ async function loadSession(dir) {
 const digestTool = defineTool({
   name: 'classroom_mobile_digest',
   description:
-    '读取手机端课堂录音的转写，生成「总结/导图/拓展/题目」任务包。分两步调用：第一次不带 payload，返回任务包与转写正文；Agent 按任务包生成内容后，第二次带上 payload（JSON 字符串）保存 summary.md、mindmap.md 并写入 5 道题。当学生说「生成这节课的总结和导图」时调用。',
+    '读取手机端课堂录音的转写，生成「总结/重难点/导图/拓展/题目」任务包。分两步调用：第一次不带 payload，返回任务包与转写正文；Agent 按任务包生成内容后，第二次带上 payload（JSON 字符串）保存 summary.md、keypoints.md、mindmap.md 并写入 5 道题。当学生说「生成这节课的总结和导图」时调用。',
   parameters: {
     session: {
       type: 'string',
@@ -78,7 +78,7 @@ const digestTool = defineTool({
     },
     payload: {
       type: 'string',
-      description: '第二步使用：JSON 字符串，形如 {"summary":"...","mindmap":"```mermaid\\nmindmap\\n...```","extensions":["..."],"questions":[{"question":"...","expected":"...","level":1},...]}',
+      description: '第二步使用：JSON 字符串，形如 {"summary":"...","keypoints":"...","mindmapType":"tree","mindmap":"%% type: tree\\n- ...","extensions":["..."],"questions":[{"question":"...","expected":"...","level":1},...]}',
     },
   },
   output: textOut,
@@ -110,16 +110,18 @@ const digestTool = defineTool({
         `会话目录：${session.dirName}`,
         `转写：${segments.length} 段，共 ${bodyText.replace(/\s/g, '').length} 字${truncated ? '（超过 30000 字，已截断展示）' : ''}`,
         '',
-        '请严格按下面四项产出（内容用中文，基于转写原文，不要编造转写里没有的事实）：',
+        '请严格按下面五项产出（内容用中文，基于转写原文，不要编造转写里没有的事实）：',
         '1) summary.md：5 条带 [mm:ss] 时间戳的要点，每条 1~2 句；',
-        '2) mindmap.md：一个 mermaid mindmap 代码块（根节点 root((课程标题))，3~4 层，节点用中文短语）；',
-        '3) 3 条知识拓展（每条 2~4 句，说明与本节课的关系）；',
-        '4) 5 道由易到难的检验题，每题给出参考答案。',
+        '2) keypoints.md：课堂重难点，三个小节「## 重点」「## 难点」「## 易错点」，每条都要带 [mm:ss]；重点 3~5 条，难点与易错点各 2~4 条；',
+        '3) mindmap.md：四种结构任选其一，第一行写 `%% type: mindmap`（或 tree / timeline / brace），后面用缩进大纲（`- ` 开头，每层两个空格）表示层级；根节点是课程标题，3~4 层，节点用中文短语。不要用 mermaid 代码块；',
+        '4) 3 条知识拓展（每条 2~4 句，说明与本节课的关系）；',
+        '5) 5 道由易到难的检验题，每题给出参考答案。',
         '',
         '完成后调用本工具保存，参数：',
         `session="${session.dirName}"`,
         'payload=一个 JSON 字符串（不要用代码块包裹）：',
-        '{"summary":"- [00:12] ...\\n- [03:40] ...","mindmap":"```mermaid\\nmindmap\\n  root((课程标题))\\n    ...\\n```","extensions":["...","...","..."],"questions":[{"question":"...","expected":"...","level":1},{"question":"...","expected":"...","level":2},{"question":"...","expected":"...","level":3},{"question":"...","expected":"...","level":4},{"question":"...","expected":"...","level":5}]}',
+        '{"summary":"- [00:12] ...\\n- [03:40] ...","keypoints":"## 重点\\n- [00:45] ...\\n## 难点\\n- [05:10] ...\\n## 易错点\\n- [08:20] ...","mindmapType":"tree","mindmap":"%% type: tree\\n- 课程标题\\n  - 第一部分\\n    - 要点\\n  - 第二部分\\n    - 要点","extensions":["...","...","..."],"questions":[{"question":"...","expected":"...","level":1},{"question":"...","expected":"...","level":2},{"question":"...","expected":"...","level":3},{"question":"...","expected":"...","level":4},{"question":"...","expected":"...","level":5}]}',
+        'mindmapType 只能是 mindmap / tree / timeline / brace 之一；手机页面顶部有四个视图按钮，学生可随时切换查看。',
         '',
         '--- 转写正文开始 ---',
         body,
@@ -139,11 +141,25 @@ const digestTool = defineTool({
       return { text: '错误：payload 必须是一个 JSON 对象。' };
     }
     const summary = String(payload.summary || '').trim();
-    const mindmap = String(payload.mindmap || '').trim();
+    const mindmapRaw = String(payload.mindmap || '').trim();
+    const keypoints = String(payload.keypoints || '').trim();
+    const mindmapType = String(payload.mindmapType || '').trim().toLowerCase() || 'mindmap';
     const extensions = Array.isArray(payload.extensions) ? payload.extensions.map(String).filter(Boolean) : [];
     const questions = Array.isArray(payload.questions) ? payload.questions : [];
+    const MINDMAP_TYPES = ['mindmap', 'tree', 'timeline', 'brace'];
     if (!summary) return { text: '错误：payload.summary 为空，没有保存。' };
-    if (!mindmap) return { text: '错误：payload.mindmap 为空，没有保存。' };
+    if (!mindmapRaw) return { text: '错误：payload.mindmap 为空，没有保存。' };
+    if (!keypoints) {
+      return { text: '错误：payload.keypoints（课堂重难点）为空，没有保存。请按「## 重点 / ## 难点 / ## 易错点」三个小节生成，每条带 [mm:ss]。' };
+    }
+    if (!MINDMAP_TYPES.includes(mindmapType)) {
+      return { text: `错误：payload.mindmapType 只能是 ${MINDMAP_TYPES.join(' / ')}，当前是「${mindmapType}」，没有保存。` };
+    }
+    // 统一成「首行 %% type + 缩进大纲」；如果 Agent 仍给了旧格式 mermaid 代码块，保留原文交给页面兼容
+    const isLegacyMermaid = /```mermaid/i.test(mindmapRaw);
+    const mindmap = isLegacyMermaid || /^\s*%%\s*type\s*:/i.test(mindmapRaw)
+      ? mindmapRaw
+      : `%% type: ${mindmapType}\n${mindmapRaw}`;
     if (questions.length !== 5) {
       return { text: `错误：payload.questions 需要正好 5 道题（由易到难），当前 ${questions.length} 道，没有保存。请补齐后再调用。` };
     }
@@ -162,12 +178,15 @@ const digestTool = defineTool({
       summaryMd += `\n## 知识拓展\n\n${extensions.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n`;
     }
     await fsp.writeFile(p.summary, summaryMd, 'utf8');
+    const keypointsMd = keypoints.startsWith('#') ? keypoints : `# ${session.title} 课堂重难点\n\n${keypoints}\n`;
+    await fsp.writeFile(p.keypoints, keypointsMd.endsWith('\n') ? keypointsMd : `${keypointsMd}\n`, 'utf8');
     await fsp.writeFile(p.mindmap, mindmap.endsWith('\n') ? mindmap : `${mindmap}\n`, 'utf8');
     const count = await rewriteQuestions(session, cleanedQuestions);
     return {
       text: `已保存到手机可读的会话「${session.title}」：\n`
         + `- 总结 → ${p.summary}\n`
-        + `- 导图 → ${p.mindmap}\n`
+        + `- 重难点 → ${p.keypoints}\n`
+        + `- 导图（${mindmapType}）→ ${p.mindmap}\n`
         + `- 题目 → ${p.quiz}（${count} 道，correct 留空待批改）\n\n`
         + `更新于 ${isoNow()}。手机页面刷新「总结/导图/复习」页即可看到。`,
     };
@@ -276,12 +295,11 @@ function lanIPv4List() {
 const urlTool = defineTool({
   name: 'classroom_mobile_url',
   description:
-    '查询手机访问地址与访问码。学生问「手机打开什么网址」「访问码是多少」「手机怎么连不上」时调用。返回公网 HTTPS 隧道地址（手机用流量或任意 WiFi 都能访问）、6 位访问码、局域网备用地址与隧道状态。',
+    '查询手机访问地址。学生问「手机打开什么网址」「手机怎么连不上」时调用。返回公网 HTTPS 隧道地址（手机用流量或任意 WiFi 都能访问）、局域网备用地址与隧道状态。默认不需要访问码；只有设置了 DSH_CLASSROOM_PIN=1 时才额外返回访问码。',
   parameters: {},
   output: textOut,
   async execute() {
     const t = getTunnelState();
-    const pin = await ensureAccessPin();
     const lan = lanIPv4List();
     const port = t.port || PORT_START;
     const lines = ['【手机访问地址】'];
@@ -292,7 +310,12 @@ const urlTool = defineTool({
     } else {
       lines.push(`公网地址：暂时不可用（状态：${t.status}${t.error ? `，${t.error}` : ''}）。稍等片刻再问一次。`);
     }
-    lines.push(`访问码：${pin}（手机首次打开公网地址时输入，输入后本机记住）`);
+    if (PIN_REQUIRED) {
+      const pin = await ensureAccessPin();
+      lines.push(`访问码：${pin}（已开启访问码保护，手机首次打开时输入）`);
+    } else {
+      lines.push('访问码：不需要（打开地址直接用）');
+    }
     if (lan.length) {
       lines.push('', '局域网备用（手机与电脑连同一个 WiFi 时）：');
       for (const x of lan) lines.push(`- http://${x.address}:${port}（${x.name}）`);
