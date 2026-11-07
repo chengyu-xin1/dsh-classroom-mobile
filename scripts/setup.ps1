@@ -117,6 +117,19 @@ if (-not $SkipCloudflared) {
   }
 } else { Warn '按参数跳过 cloudflared 下载' }
 
+# 把插件自带的 skill 复制到 DSH 用户技能目录（DSH 只扫描这些目录，不扫描插件包内）
+try {
+  $skillSrc = Join-Path $PSScriptRoot '..\skills'
+  $skillDst = Join-Path $env:USERPROFILE '.dsh\skills'
+  if (Test-Path $skillSrc) {
+    New-Item -ItemType Directory -Force -Path $skillDst | Out-Null
+    Get-ChildItem $skillSrc -Directory | ForEach-Object {
+      Copy-Item $_.FullName (Join-Path $skillDst $_.Name) -Recurse -Force
+    }
+    Ok ("已安装 skill 到 " + $skillDst)
+  }
+} catch { Warn ("skill 安装失败：" + $_.Exception.Message) }
+
 Say ''
 Say '================ 下一步 ================'
 Say '1) 把插件装进 DSH（二选一）：'
