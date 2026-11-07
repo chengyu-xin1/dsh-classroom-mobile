@@ -53,8 +53,13 @@ export const CLOUDFLARED_EXE = CLOUDFLARED_CANDIDATES.find((p) => {
 export const TUNNEL_ENABLED = String(process.env.DSH_CLASSROOM_MOBILE_TUNNEL ?? '1') !== '0';
 export const TUNNEL_MAX_RESTARTS = 10;
 export const TUNNEL_START_TIMEOUT_MS = 60 * 1000;
+// 隧道传输协议：默认 http2（走 TCP 443）。校园网常把 QUIC/UDP 限得很慢（实测 49KB 页面要 15s），
+// 改用 http2 后同一页面约 0.8～2.4s。可用 DSH_CLASSROOM_TUNNEL_PROTOCOL=quic 改回。
+export const TUNNEL_PROTOCOL = process.env.DSH_CLASSROOM_TUNNEL_PROTOCOL || 'http2';
 // 访问码：非本机访问（手机/公网）需要带 6 位访问码，防止隧道地址被陌生人利用
 export const ACCESS_FILE = path.join(DATA_ROOT, 'access.json');
+// 访问码默认关闭：手机打开地址直接用，不需要输入。需要保护时设 DSH_CLASSROOM_PIN=1 打开。
+export const PIN_REQUIRED = String(process.env.DSH_CLASSROOM_PIN ?? '0') !== '0';
 
 export const PYTHON = process.env.DSH_CLASSROOM_PYTHON || 'python';
 export const FFMPEG = process.env.DSH_CLASSROOM_FFMPEG || 'ffmpeg';
