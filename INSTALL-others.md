@@ -30,6 +30,35 @@
 
 ---
 
+## 1.5 方式 A+：双击 `install.bat`（现在就能用，最推荐）
+
+1. 打开 <https://github.com/chengyu-xin1/dsh-classroom-mobile>
+2. 绿色 **Code → Download ZIP**
+3. 解压，进入文件夹，**双击 `install.bat`**
+4. 等它跑完（下载插件、复制到 profile、注册 bundle、准备 Python/模型/cloudflared，首次可能 5～20 分钟）
+5. 完全退出 DSH 再重新打开 → 在对话里说「手机访问地址」
+
+脚本做的事（可自己核对，就在 `scripts/install.ps1`）：
+- 从 GitHub 下载最新 ZIP（官方源失败会自动换 ghfast 镜像）
+- 复制到 `C:\Users\<你>\.dsh\profiles\desktop\node_modules\dsh-classroom-mobile`
+- 备份并修改 profile 的 `package.json`，把插件加进 `dsh.profile.bundles`
+- 调用 `scripts/setup.ps1` 装 faster-whisper、small 模型、cloudflared
+
+常用参数：
+
+```powershell
+# 只装插件，不装模型/环境
+install.bat -SkipSetup
+# 覆盖重装（会先备份旧目录）
+install.bat -Force
+# 用已经下载好的 ZIP
+install.bat -ZipPath "D:\下载\插件.zip"
+# 只看计划，不写文件
+install.bat -DryRun
+```
+
+---
+
 ## 2. 方式 B：命令行安装（需要 dsh CLI）
 
 ```powershell
