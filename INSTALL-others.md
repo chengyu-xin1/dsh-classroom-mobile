@@ -169,6 +169,21 @@ if ($j.dsh.profile.bundles -notcontains 'dsh-classroom-mobile') {
 6. **手机连不上**：排查顺序见 README「手机连接」——先本机 `127.0.0.1`，再局域网 IP，
    本机通、手机不通通常是 Windows 防火墙或校园网客户端隔离。
 7. **不要公开隧道地址**：插件只有 6 位访问码，没有账号体系；地址只发给同学本人。
+8. **双击 `install.bat` 被「智能应用控制」拦截**（弹窗：*此文件已被阻止，因为来自 Internet…*）：
+   Windows 11 的智能应用控制把「从网上下载的脚本」当成不安全文件，这不是插件有毒。按顺序试：
+   - **办法一（推荐）**：对**下载的 ZIP** 右键 → 属性 → 常规 → 勾选「解除锁定」→ 确定，**再解压**，然后双击 `install.bat`。
+     已经解压了也不要紧，在解压出来的文件夹里打开 PowerShell 运行：
+     ```powershell
+     Get-ChildItem -Recurse | Unblock-File
+     ```
+     然后再双击 `install.bat`。
+   - **办法二（不碰 bat）**：在解压目录打开 PowerShell，直接跑安装脚本（不受智能应用控制拦 bat 的影响）：
+     ```powershell
+     powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
+     ```
+   - **办法三（不推荐）**：Windows 安全中心 → 应用和浏览器控制 → 智能应用控制 → 关闭。
+     微软的限制是：智能应用控制关闭后，**只能重置 / 重装 Windows 才能重新打开**，所以不建议。
+   - 弹窗里的「从 Microsoft Store 获得应用」是系统把它误当应用推荐，**不要点**，直接关掉弹窗。
 
 ---
 
