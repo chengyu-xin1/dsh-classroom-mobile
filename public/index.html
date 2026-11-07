@@ -171,11 +171,107 @@
   #toast.show{opacity:1;transform:translate(-50%,0)}
   #toast.err{background:#b42318}
   #toast.ok{background:#046c4b}
+
+  /* ---------- 导图视图切换 ---------- */
+  .viewtabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .vt{
+    flex:1 1 calc(50% - 8px);min-height:56px;padding:8px 10px;
+    font-family:inherit;font-size:17px;font-weight:700;color:var(--accent-dark);
+    background:var(--accent-soft);border:1.5px solid transparent;border-radius:12px;cursor:pointer;
+  }
+  .vt.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .mm-note{font-size:16px;color:var(--muted);line-height:1.5;margin:0 0 10px}
+
+  /* 组织树：上下分叉，按层铺开 */
+  .orgtree{display:flex;flex-direction:column;align-items:center;padding:4px 0}
+  .org-level{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;width:100%;padding:16px 0 4px;position:relative}
+  .org-level:first-child{padding-top:4px}
+  .org-level + .org-level::before{
+    content:"";position:absolute;top:0;left:50%;height:15px;
+    border-left:2px dashed #c9d6ea;transform:translateX(-1px);
+  }
+  .org-level>.node{margin:2px 0}
+
+  /* 时间轴：竖轴 + 圆点 + 卡片 */
+  .timeline{padding:4px 0 0}
+  .tl-item{display:flex;align-items:stretch;gap:8px;position:relative}
+  .tl-time{
+    flex:0 0 66px;text-align:right;padding-top:8px;
+    font-size:17px;font-weight:700;color:var(--accent-dark);
+    font-variant-numeric:tabular-nums;line-height:1.4;
+  }
+  .tl-axis{position:relative;flex:0 0 24px;display:flex;justify-content:center}
+  .tl-axis::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:#cfdcef}
+  .tl-item:first-child .tl-axis::before{top:18px}
+  .tl-item:last-child .tl-axis::before{bottom:auto;height:20px}
+  .tl-dot{
+    position:relative;z-index:1;width:14px;height:14px;margin-top:14px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 0 4px #e6ecff;
+  }
+  .tl-card{
+    flex:1 1 auto;min-width:0;margin:6px 0 14px;
+    background:#f7f9fd;border:1px solid var(--line);border-radius:14px;padding:10px 12px;
+  }
+  .tl-title{font-size:19px;font-weight:700;line-height:1.45}
+  .tl-card ul{margin:6px 0 0;padding-left:20px}
+  .tl-card ul ul{padding-left:18px}
+  .tl-card li{font-size:17px;line-height:1.55;margin:4px 0}
+
+  /* 分块大纲：左侧色块 + 竖线 */
+  .brace{display:flex;flex-direction:column;gap:12px}
+  .brace-block{display:flex;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fbfcfe}
+  .brace-bar{flex:0 0 8px;background:var(--accent)}
+  .brace-block:nth-child(3n+2) .brace-bar{background:var(--ok)}
+  .brace-block:nth-child(3n) .brace-bar{background:var(--warn)}
+  .brace-body{flex:1 1 auto;min-width:0;padding:12px 14px}
+  .brace-title{font-size:19px;font-weight:700;line-height:1.45}
+  .brace-body ul{margin:8px 0 0;padding-left:20px}
+  .brace-body ul ul{padding-left:18px}
+  .brace-body li{font-size:17px;line-height:1.55;margin:5px 0}
+  .brace-body li::marker{color:var(--accent)}
+
+  /* ---------- 录音文件上传 ---------- */
+  .dropzone{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    min-height:132px;padding:18px 16px;text-align:center;
+    border:2px dashed #b9c8de;border-radius:16px;background:#f8fafd;cursor:pointer;
+  }
+  .dropzone.dragover{border-color:var(--accent);background:var(--accent-soft)}
+  .dz-icon{font-size:30px;font-weight:700;color:var(--accent-dark);line-height:1}
+  .dz-main{font-size:19px;font-weight:700;line-height:1.45}
+  .dz-sub{font-size:15px;color:var(--muted);line-height:1.5}
+  .upload-list{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+  .up-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbfcfe}
+  .up-name{font-size:17px;font-weight:700;line-height:1.45;word-break:break-all}
+  .up-meta{font-size:15px;color:var(--muted);margin-top:2px}
+  .up-item.uploading .up-meta{color:var(--accent-dark);font-weight:600}
+  .up-item.done .up-meta{color:var(--ok);font-weight:700}
+  .up-item.fail{border-color:var(--danger-line);background:var(--danger-bg)}
+  .up-item.fail .up-meta{color:var(--danger);font-weight:700}
+  .up-retry{
+    display:block;width:100%;min-height:56px;margin-top:8px;padding:8px 16px;
+    font-family:inherit;font-size:17px;font-weight:700;color:#fff;
+    background:var(--danger);border:0;border-radius:12px;cursor:pointer;
+  }
+
+  /* ---------- 课堂重难点 ---------- */
+  #keypointsBody h2,#keypointsBody h3{
+    font-size:19px;line-height:1.4;margin:14px 0 8px;padding-left:10px;border-left:4px solid var(--accent);
+  }
+  #keypointsBody h2{font-size:21px}
+  #keypointsBody h2:first-child,#keypointsBody h3:first-child{margin-top:0}
+
   @media (min-width:720px){
     main{max-width:720px;margin:0 auto}
     #tabbar{padding-left:calc((100vw - 720px)/2);padding-right:calc((100vw - 720px)/2)}
   }
 </style>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="课堂学习">
 </head>
 <body>
 
@@ -213,6 +309,20 @@
 
     <div class="card">
       <div class="card-head">
+        <h3>上传录音文件</h3>
+      </div>
+      <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="拖入或点按选择录音文件">
+        <div class="dz-icon" aria-hidden="true">＋</div>
+        <div class="dz-main">拖入录音文件，或点这里选择</div>
+        <div class="dz-sub">webm / m4a / mp3 / wav / ogg，可一次选多个</div>
+      </div>
+      <input type="file" id="fileInput" accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg" multiple hidden>
+      <div id="uploadList" class="upload-list"></div>
+      <p class="small">上传后自动转写，可能要等 30 秒~几分钟。上课录音的同时也可以补传之前的录音。</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
         <h3>实时字幕</h3>
         <button id="btnLiveRefresh" class="btn btn-ghost" type="button">刷新</button>
       </div>
@@ -243,6 +353,13 @@
       </div>
       <div id="summaryBody" class="md"><div class="empty">加载中…</div></div>
     </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>课堂重难点</h3>
+      </div>
+      <div id="keypointsBody" class="md"><div class="empty">加载中…</div></div>
+    </div>
   </section>
 
   <!-- ========== 导图页 ========== -->
@@ -253,6 +370,13 @@
         <h3>知识结构</h3>
         <button id="btnMindmapRefresh" class="btn btn-ghost" type="button">刷新</button>
       </div>
+      <div class="viewtabs" id="mmViews" role="group" aria-label="导图视图切换">
+        <button class="vt active" type="button" data-view="mindmap" aria-pressed="true">脑图</button>
+        <button class="vt" type="button" data-view="tree" aria-pressed="false">组织树</button>
+        <button class="vt" type="button" data-view="timeline" aria-pressed="false">时间轴</button>
+        <button class="vt" type="button" data-view="brace" aria-pressed="false">分块</button>
+      </div>
+      <div class="mm-note" id="mmNote" hidden></div>
       <div id="mindmapBody"><div class="empty">加载中…</div></div>
       <details class="src" id="mindmapSrcWrap" hidden>
         <summary>查看源码</summary>
@@ -515,6 +639,8 @@
     manualBox: $('manualBox'), manualText: $('manualText'), manualBtn: $('btnManual'),
     summaryBody: $('summaryBody'), mindmapBody: $('mindmapBody'),
     mindmapSrc: $('mindmapSrc'), mindmapSrcWrap: $('mindmapSrcWrap'),
+    mmViews: $('mmViews'), mmNote: $('mmNote'), keypointsBody: $('keypointsBody'),
+    dropZone: $('dropZone'), fileInput: $('fileInput'), uploadList: $('uploadList'),
     reviewBanner: $('reviewBanner'), pendingList: $('pendingList'),
     reviewOk: $('reviewOk'), goRecord: $('btnGoRecord'),
     questionList: $('questionList'), newQCard: $('newQCard'),
@@ -1065,8 +1191,19 @@
 
   var summaryCache = null;
 
+  // 课堂重难点：/api/summary 的 keypoints 字段（markdown，含重点/难点/易错点）
+  function renderKeypoints(md) {
+    var s = String(md || '').trim();
+    if (s) {
+      el.keypointsBody.innerHTML = renderMarkdown(s);
+    } else {
+      el.keypointsBody.innerHTML = '<div class="empty">还没有重难点。先在 DSH 里说：生成重难点</div>';
+    }
+  }
+
   function loadSummary() {
     el.summaryBody.innerHTML = '<div class="empty">加载中…</div>';
+    el.keypointsBody.innerHTML = '<div class="empty">加载中…</div>';
     return api('/api/summary', { timeoutMs: 12000 }).then(function (d) {
       summaryCache = d;
       var md = String((d && d.summary) || '').trim();
@@ -1075,9 +1212,11 @@
       } else {
         el.summaryBody.innerHTML = '<div class="empty">还没有总结。先在 DSH 里说：生成这节课的总结和导图</div>';
       }
+      renderKeypoints(d && d.keypoints);
       return d;
     }).catch(function (e) {
       el.summaryBody.innerHTML = '<div class="empty">总结加载失败：' + escapeHtml(errText(e)) + '</div>';
+      el.keypointsBody.innerHTML = '<div class="empty">重难点加载失败：' + escapeHtml(errText(e)) + '</div>';
       return null;
     });
   }
@@ -1089,6 +1228,8 @@
      ========================================================= */
   function cleanMindLabel(text) {
     var s = String(text || '').trim();
+    // 新格式是 `- ` 缩进大纲，先剥掉列表符号；旧格式也兼容
+    s = s.replace(/^[-*+]\s+/, '').replace(/^\d+[.)]\s+/, '');
     s = s.replace(/\s*:::.*$/, '');
     if (/^mindmap\b/i.test(s)) return '';
     // 去掉 mermaid 节点形状标记：((..)) [[..]] {{..}} [..] (..) ))..(( )..(
@@ -1137,6 +1278,114 @@
     for (var i = 0; i < node.children.length; i++) bumpDepth(node.children[i], d + 1);
   }
 
+  // ---------- mindmap.md 文档解析：首行可能是 `%% type: tree` ----------
+  var MM_VIEWS = ['mindmap', 'tree', 'timeline', 'brace'];
+  var MM_VIEW_NAMES = { mindmap: '脑图', tree: '组织树', timeline: '时间轴', brace: '分块大纲' };
+
+  function normalizeMmType(t) {
+    var s = String(t || '').toLowerCase();
+    for (var i = 0; i < MM_VIEWS.length; i++) if (MM_VIEWS[i] === s) return s;
+    return '';
+  }
+
+  function parseMindDoc(src) {
+    var text = String(src || '');
+    var lines = text.split(/\r?\n/);
+    var declared = '';
+    var body = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (!declared) {
+        var t = line.match(/^\s*%%\s*type\s*[:：]\s*([A-Za-z]+)/i);
+        if (t) { declared = normalizeMmType(t[1]); continue; }
+        if (/^\s*mindmap\s*$/i.test(line)) { declared = 'mindmap'; continue; }
+      }
+      body.push(line);
+    }
+    var root = parseMindmap(body.join('\n'));
+    return { type: declared || 'mindmap', declared: declared, root: root, src: text };
+  }
+
+  // 从节点文字里提时间：[12:30] / (12:30) / 开头 12:30 / 12分30秒
+  function splitMmTime(label) {
+    var s = String(label || '');
+    var m = s.match(/^(\d{1,3})\s*[:：]\s*(\d{1,2})/);
+    if (!m) m = s.match(/^[\[(（【]\s*(\d{1,3})\s*[:：]\s*(\d{1,2})\s*[\])）】]/);
+    if (m) {
+      var sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+      var rest = s.slice(m[0].length).replace(/^[\s:：\-—·、]+/, '');
+      return { time: fmtSec(sec), label: rest || s };
+    }
+    m = s.match(/^(\d{1,3})\s*分\s*(\d{1,2})\s*秒?/);
+    if (m) {
+      var sec2 = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+      var rest2 = s.slice(m[0].length).replace(/^[\s:：\-—·、]+/, '');
+      return { time: fmtSec(sec2), label: rest2 || s };
+    }
+    return { time: '', label: s };
+  }
+
+  // 子节点递归列表（时间轴 / 分块共用）
+  function subTreeHtml(node) {
+    if (!node.children || !node.children.length) return '';
+    var html = '<ul>';
+    for (var i = 0; i < node.children.length; i++) {
+      html += '<li>' + escapeHtml(node.children[i].label) + subTreeHtml(node.children[i]) + '</li>';
+    }
+    return html + '</ul>';
+  }
+
+  // 组织树：按层铺开，上下分叉
+  function orgTreeHtml(root) {
+    var levels = [];
+    var queue = [{ node: root, depth: 0 }];
+    while (queue.length) {
+      var cur = queue.shift();
+      if (!levels[cur.depth]) levels[cur.depth] = [];
+      levels[cur.depth].push(cur.node);
+      var kids = cur.node.children || [];
+      for (var i = 0; i < kids.length; i++) queue.push({ node: kids[i], depth: cur.depth + 1 });
+    }
+    var html = '<div class="orgtree">';
+    for (var d = 0; d < levels.length; d++) {
+      html += '<div class="org-level">';
+      for (var k = 0; k < levels[d].length; k++) {
+        html += '<span class="node d' + Math.min(3, d) + '">' + escapeHtml(levels[d][k].label) + '</span>';
+      }
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+
+  // 时间轴：顶层节点是时间点，能提时间就显示时间，否则用序号
+  function timelineHtml(root) {
+    var points = (root.children && root.children.length) ? root.children : [root];
+    var html = '<div class="timeline">';
+    for (var i = 0; i < points.length; i++) {
+      var tp = splitMmTime(points[i].label);
+      var when = tp.time || String(i + 1);
+      html += '<div class="tl-item">';
+      html += '<div class="tl-time">' + escapeHtml(when) + '</div>';
+      html += '<div class="tl-axis"><span class="tl-dot"></span></div>';
+      html += '<div class="tl-card"><div class="tl-title">' + escapeHtml(tp.label) + '</div>' + subTreeHtml(points[i]) + '</div>';
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+
+  // 分块大纲：顶层节点色块 + 竖线
+  function braceHtml(root) {
+    var blocks = (root.children && root.children.length) ? root.children : [root];
+    var html = '<div class="brace">';
+    for (var i = 0; i < blocks.length; i++) {
+      html += '<div class="brace-block"><div class="brace-bar"></div><div class="brace-body">';
+      html += '<div class="brace-title">' + escapeHtml(blocks[i].label) + '</div>';
+      html += subTreeHtml(blocks[i]);
+      html += '</div></div>';
+    }
+    return html + '</div>';
+  }
+
   function treeHtml(node) {
     var cls = 'node d' + Math.min(3, node.depth);
     var html = '<li><span class="' + cls + '">' + escapeHtml(node.label) + '</span>';
@@ -1149,21 +1398,59 @@
     return html;
   }
 
+  var mindmapDoc = null;
+  var mindmapView = '';
+
+  function markViewButtons(view) {
+    var btns = el.mmViews.querySelectorAll('.vt');
+    for (var i = 0; i < btns.length; i++) {
+      var on = btns[i].getAttribute('data-view') === view;
+      btns[i].classList.toggle('active', on);
+      btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+
+  function renderMindmapView() {
+    if (!mindmapDoc) return;
+    var view = mindmapView || mindmapDoc.type;
+    if (!mindmapDoc.root) {
+      el.mindmapBody.innerHTML = '<div class="empty">导图解析不出结构，可以展开下面「查看源码」查看原文。</div>';
+      markViewButtons(view);
+      return;
+    }
+    var html;
+    if (view === 'tree') html = orgTreeHtml(mindmapDoc.root);
+    else if (view === 'timeline') html = timelineHtml(mindmapDoc.root);
+    else if (view === 'brace') html = braceHtml(mindmapDoc.root);
+    else html = '<ul class="tree">' + treeHtml(mindmapDoc.root) + '</ul>';
+    el.mindmapBody.innerHTML = html;
+    markViewButtons(view);
+  }
+
   function loadMindmap() {
     el.mindmapBody.innerHTML = '<div class="empty">加载中…</div>';
     el.mindmapSrcWrap.hidden = true;
+    el.mmNote.hidden = true;
     return api('/api/summary', { timeoutMs: 12000 }).then(function (d) {
       var src = String((d && d.mindmap) || '').trim();
       if (!src) {
+        mindmapDoc = null;
+        mindmapView = '';
         el.mindmapBody.innerHTML = '<div class="empty">还没有导图。先在 DSH 里说：生成这节课的总结和导图</div>';
         return d;
       }
-      var tree = parseMindmap(src);
-      if (tree) {
-        el.mindmapBody.innerHTML = '<ul class="tree">' + treeHtml(tree) + '</ul>';
-      } else {
-        el.mindmapBody.innerHTML = '<div class="empty">导图解析不出结构，可以展开下面「查看源码」查看原文。</div>';
+      mindmapDoc = parseMindDoc(src);
+      // 文件里没写 %% type: 时，用服务端解析的 mindmapType 兜底
+      if (!mindmapDoc.declared && d && d.mindmapType) {
+        var svType = normalizeMmType(d.mindmapType);
+        if (svType) { mindmapDoc.type = svType; mindmapDoc.fromServer = true; }
       }
+      // 默认视图 = 文件首行声明的 type
+      mindmapView = mindmapDoc.type;
+      renderMindmapView();
+      var typed = !!mindmapDoc.declared || !!mindmapDoc.fromServer;
+      el.mmNote.hidden = typed;
+      el.mmNote.textContent = '源码里没有写 %% type: 声明，默认按脑图显示；可以点上面的按钮换视图。';
       el.mindmapSrc.textContent = src;
       el.mindmapSrcWrap.hidden = false;
       return d;
@@ -1173,7 +1460,233 @@
     });
   }
 
+  el.mmViews.addEventListener('click', function (ev) {
+    var t = ev.target;
+    while (t && t !== el.mmViews && !t.getAttribute('data-view')) t = t.parentNode;
+    if (!t || t === el.mmViews) return;
+    var v = t.getAttribute('data-view');
+    if (MM_VIEWS.indexOf(v) < 0 || v === mindmapView) return;
+    mindmapView = v;
+    if (mindmapDoc) renderMindmapView();
+    else loadMindmap();
+  });
+
   $('btnMindmapRefresh').addEventListener('click', loadMindmap);
+
+  /* =========================================================
+     录音文件上传：拖入 / 选择 → 先确保有会话 → 原始二进制 POST
+     ========================================================= */
+  var AUDIO_EXT_RE = /\.(webm|m4a|mp3|wav|ogg)$/i;
+  var EXT_MIME = {
+    webm: 'audio/webm', m4a: 'audio/mp4', mp4: 'audio/mp4',
+    mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg'
+  };
+  var MAX_FILE_BYTES = 40 * 1024 * 1024;
+  var uploadItems = [];
+  var uploadRunning = false;
+
+  function fileExt(name) {
+    var m = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+    return m ? m[1] : '';
+  }
+
+  function isAudioFile(file) {
+    var type = String((file && file.type) || '');
+    var name = String((file && file.name) || '');
+    return /^audio\//i.test(type) || AUDIO_EXT_RE.test(name);
+  }
+
+  // Content-Type 用文件 MIME；浏览器识别不到时按扩展名补，再不行用 octet-stream
+  function fileMime(file) {
+    var type = String((file && file.type) || '');
+    if (type) return type;
+    var byExt = EXT_MIME[fileExt(file && file.name)];
+    return byExt || 'application/octet-stream';
+  }
+
+  function baseName(name) {
+    return String(name || '').replace(/\.[^.\/\\]+$/, '').trim() || '录音文件';
+  }
+
+  function fmtSize(n) {
+    n = Number(n) || 0;
+    if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+    if (n >= 1024) return Math.round(n / 1024) + ' KB';
+    return n + ' B';
+  }
+
+  function renderUploadList() {
+    if (!uploadItems.length) { el.uploadList.innerHTML = ''; return; }
+    var html = '';
+    for (var i = 0; i < uploadItems.length; i++) {
+      var it = uploadItems[i];
+      var meta;
+      if (it.status === 'uploading') meta = '上传中…';
+      else if (it.status === 'done') meta = '已上传，正在自动转写';
+      else if (it.status === 'fail') meta = '上传失败：' + (it.err || '请重试');
+      else meta = '等待上传';
+      html += '<div class="up-item ' + it.status + '">';
+      html += '<div class="up-name">' + escapeHtml(it.file.name) + '</div>';
+      html += '<div class="up-meta">' + escapeHtml(fmtSize(it.file.size) + ' · ' + meta) + '</div>';
+      if (it.status === 'fail') {
+        html += '<button class="up-retry" type="button" data-retry="' + i + '">重试</button>';
+      }
+      html += '</div>';
+    }
+    el.uploadList.innerHTML = html;
+  }
+
+  // 没有会话就先建一个，标题用文件名（去扩展名）
+  function ensureSession(titleForFile) {
+    return api('/api/state', { timeoutMs: 10000 }).then(function (d) {
+      if (d && d.session) { applyState(d); return d.session; }
+      return api('/api/session/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: titleForFile })
+      }).then(function (r) {
+        if (r && r.state) applyState(r.state);
+        return (r && r.session) || {};
+      });
+    });
+  }
+
+  function postAudioFile(file) {
+    return api('/api/audio', {
+      method: 'POST',
+      headers: {
+        'Content-Type': fileMime(file),
+        'X-File-Name': encodeURIComponent(String(file.name || 'recording'))
+      },
+      body: file,
+      timeoutMs: 300000
+    });
+  }
+
+  function uploadFileItem(idx) {
+    var it = uploadItems[idx];
+    if (!it) return Promise.resolve();
+    if (Number(it.file.size) > MAX_FILE_BYTES) {
+      it.status = 'fail';
+      it.err = '文件超过 40MB';
+      renderUploadList();
+      showToast('「' + it.file.name + '」超过 40MB 上限，请压缩或分段后再传', 'err');
+      return Promise.resolve();
+    }
+    it.status = 'uploading';
+    it.err = '';
+    renderUploadList();
+    var file = it.file;
+    var retriedNoSession = false;
+
+    function attempt() {
+      return ensureSession(baseName(file.name)).then(function () {
+        return postAudioFile(file);
+      }).catch(function (e) {
+        if (e && e.code === 'no_session' && !retriedNoSession) {
+          retriedNoSession = true;
+          return attempt();
+        }
+        throw e;
+      });
+    }
+
+    return attempt().then(function (d) {
+      it.status = 'done';
+      it.chunk = d && d.chunk;
+      renderUploadList();
+      showToast('已上传「' + file.name + '」，自动转写要等一会儿', 'ok');
+      loadState();
+    }).catch(function (e) {
+      it.status = 'fail';
+      it.err = errText(e);
+      renderUploadList();
+      showToast('「' + file.name + '」上传失败：' + errText(e), 'err');
+      if (e && e.code === 'wrong_questions_pending') {
+        switchTab('review');
+        loadReview();
+      }
+    });
+  }
+
+  function drainUploads() {
+    if (uploadRunning) return;
+    uploadRunning = true;
+    function next() {
+      var idx = -1;
+      for (var i = 0; i < uploadItems.length; i++) {
+        if (uploadItems[i].status === 'wait') { idx = i; break; }
+      }
+      if (idx < 0) { uploadRunning = false; return; }
+      uploadFileItem(idx).then(next);
+    }
+    next();
+  }
+
+  function addFiles(list) {
+    if (!list || !list.length) return;
+    var added = 0;
+    var skipped = 0;
+    for (var i = 0; i < list.length; i++) {
+      var f = list[i];
+      if (!f || !isAudioFile(f)) { skipped++; continue; }
+      uploadItems.push({ file: f, status: 'wait', err: '' });
+      added++;
+    }
+    renderUploadList();
+    if (skipped) showToast('有 ' + skipped + ' 个文件不是音频格式，已跳过', 'err');
+    if (added) {
+      showToast('已加入 ' + added + ' 个文件，开始上传', 'ok');
+      drainUploads();
+    }
+  }
+
+  el.dropZone.addEventListener('click', function () {
+    try { el.fileInput.click(); } catch (e) {}
+  });
+  el.dropZone.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+      ev.preventDefault();
+      try { el.fileInput.click(); } catch (e) {}
+    }
+  });
+  el.fileInput.addEventListener('change', function () {
+    var fs = el.fileInput.files;
+    if (fs && fs.length) addFiles(fs);
+    try { el.fileInput.value = ''; } catch (e) {}
+  });
+
+  function onDragOver(ev) {
+    if (ev.preventDefault) ev.preventDefault();
+    el.dropZone.classList.add('dragover');
+  }
+  function onDragLeave(ev) {
+    if (ev.preventDefault) ev.preventDefault();
+    el.dropZone.classList.remove('dragover');
+  }
+  function onDrop(ev) {
+    if (ev.preventDefault) ev.preventDefault();
+    el.dropZone.classList.remove('dragover');
+    var dt = ev.dataTransfer;
+    if (dt && dt.files && dt.files.length) addFiles(dt.files);
+    else showToast('没读到拖入的文件，点一下这里选择文件', 'err');
+  }
+  el.dropZone.addEventListener('dragover', onDragOver);
+  el.dropZone.addEventListener('dragenter', onDragOver);
+  el.dropZone.addEventListener('dragleave', onDragLeave);
+  el.dropZone.addEventListener('drop', onDrop);
+
+  el.uploadList.addEventListener('click', function (ev) {
+    var t = ev.target;
+    while (t && t !== el.uploadList && !t.getAttribute('data-retry')) t = t.parentNode;
+    if (!t || t === el.uploadList) return;
+    var idx = Number(t.getAttribute('data-retry'));
+    if (!uploadItems[idx]) return;
+    uploadItems[idx].status = 'wait';
+    uploadItems[idx].err = '';
+    renderUploadList();
+    drainUploads();
+  });
 
   /* =========================================================
      复习页：未改正错题门控
@@ -1343,5 +1856,63 @@
   }
 })();
 </script>
-</body>
+<script>
+/* PWA：注册 service worker + 安装到主屏幕 */
+(function () {
+  try {
+    var secure = location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    if ('serviceWorker' in navigator && secure) {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    }
+  } catch (e) {}
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferred = e;
+    showInstall('安装到主屏幕');
+  });
+  window.addEventListener('appinstalled', hideInstall);
+  // 页内非阻塞提示：桌面浏览器点「安装」时告诉手机怎么加到主屏幕（不打断操作）
+  function pwaTips(text) {
+    var old = document.getElementById('pwa-tips');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var box = document.createElement('div');
+    box.id = 'pwa-tips';
+    box.textContent = text;
+    box.style.cssText = 'position:fixed;left:12px;right:12px;bottom:150px;z-index:9999;padding:14px 16px;border-radius:14px;background:#0f172a;color:#fff;font-size:18px;line-height:1.6;box-shadow:0 6px 22px rgba(0,0,0,.3)';
+    box.onclick = function () { if (box.parentNode) box.parentNode.removeChild(box); };
+    document.body.appendChild(box);
+    setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 9000);
+  }
+  function showInstall(label) {
+    if (document.getElementById('pwa-install')) return;
+    var b = document.createElement('button');
+    b.id = 'pwa-install';
+    b.textContent = '📲 ' + label;
+    b.style.cssText = 'position:fixed;right:14px;bottom:84px;z-index:9999;min-height:56px;padding:12px 16px;border:0;border-radius:24px;background:#1f3a8a;color:#fff;font-size:18px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+    b.onclick = async function () {
+      if (deferred) {
+        deferred.prompt();
+        try { await deferred.userChoice; } catch (e) {}
+        deferred = null;
+        hideInstall();
+        return;
+      }
+      pwaTips('iPhone / iPad：点浏览器底部「分享」按钮，选「添加到主屏幕」。安卓：点浏览器右上角菜单，选「添加到主屏幕」或「安装应用」。');
+    };
+    document.body.appendChild(b);
+  }
+  function hideInstall() {
+    var el = document.getElementById('pwa-install');
+    if (el) el.remove();
+  }
+  function standalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  window.addEventListener('load', function () {
+    if (standalone()) return;
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) showInstall('添加到主屏幕');
+  });
+})();
+</script></body>
 </html>
