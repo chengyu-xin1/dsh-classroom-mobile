@@ -122,7 +122,9 @@ try {
   console.log('\n=== 6. classroom_mobile_digest（第二步：保存 summary/mindmap/quiz）===');
   const payload = {
     summary: '- [00:00] 本节课学习函数的连续性与极限的定义。\n- [00:06] 强调注意黑板例题。\n- [00:10] 连续性判定要点。\n- [00:14] 极限存在性与左右极限。\n- [00:18] 课堂练习与总结。',
-    mindmap: '```mermaid\nmindmap\n  root((函数连续性))\n    极限\n      定义\n      左右极限\n    连续性\n      判定\n      例题\n```',
+    keypoints: '## 重点\n- [00:00] 连续性的定义\n- [00:06] 极限存在性\n## 难点\n- [00:10] 左右极限与函数值的比较\n## 易错点\n- [00:14] 忘记检查定义域',
+    mindmapType: 'tree',
+    mindmap: '- 函数连续性\n  - 极限\n    - 定义\n    - 左右极限\n  - 连续性\n    - 判定\n    - 例题',
     extensions: ['连续性是函数性质的基础，与可导、可积密切相关。', '极限的 ε-δ 定义有助于理解连续性。', '可结合分段函数讨论连续点。'],
     questions: [
       { question: '函数在某点连续的定义是什么？', expected: '左极限=右极限=函数值', level: 1 },
@@ -137,7 +139,9 @@ try {
   ok('digest 保存成功', /已保存/.test(step2.text) && /5 道/.test(step2.text));
   const sum = (await jfetch(base, '/api/summary')).body;
   ok('GET /api/summary 返回 summary', /本节课学习/.test(sum.summary));
-  ok('GET /api/summary 返回 mindmap', /mindmap/.test(sum.mindmap) && /函数连续性/.test(sum.mindmap));
+  ok('GET /api/summary 返回 mindmap', /函数连续性/.test(sum.mindmap) && /%%.*type:\s*tree/.test(sum.mindmap));
+  ok('GET /api/summary 返回 mindmapType=tree', sum.mindmapType === 'tree');
+  ok('GET /api/summary 返回 keypoints', /重点/.test(sum.keypoints) && /易错点/.test(sum.keypoints));
   ok('quiz.jsonl 已写入 5 道题', store.readQuiz && (await store.readQuiz({ ...sessionA })).filter((x) => x.type === 'question').length === 5);
 
   console.log('\n=== 7. 专注记录（visibilitychange 模拟 + 报告）===');
