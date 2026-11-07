@@ -72,14 +72,14 @@ HTTPS 还解决了手机浏览器「非安全上下文不能调用麦克风」�
     -OutFile D:\dsh-classroom-mobile\data\bin\cloudflared.exe
   ```
 
-- **访问码**：非本机访问（手机/公网）都要 6 位访问码，存在 `data\access.json`。
-  手机第一次打开会弹输入框；也可以直接在 DSH 里问：「手机访问码是多少」。
+- **访问码（默认关闭）**：手机打开地址直接用，不弹输入框。需要保护时设环境变量
+  `DSH_CLASSROOM_PIN=1` 再重启 DSH，非本机访问才要求 6 位码（存在 `data\access.json`）。
 - **地址会变**：quick tunnel 每次重启 DSH 可能换地址。随时在 DSH 里问
-  「手机访问地址」即可（工具 `classroom_mobile_url` 返回最新地址 + 访问码）。
-  DSH 日志里也会有：`[dsh-classroom-mobile] 公网地址：https://…  访问码：…`。
+  「手机访问地址」即可（工具 `classroom_mobile_url` 返回最新地址）。
+  DSH 日志里也会有：`[dsh-classroom-mobile] 公网地址：https://…`。
 - **关闭隧道**：设环境变量 `DSH_CLASSROOM_MOBILE_TUNNEL=0` 后重启 DSH，就只用局域网。
-- **安全提醒**：隧道地址公网可达（有访问码兜底），不要公开发布；所有数据仍然只写本机
-  `D:\dsh-classroom-mobile\data`，不上传云端（音频只经过 Cloudflare 转发到你的电脑）。
+- **安全提醒**：隧道地址公网可达，**没有访问码时拿到链接的人也能打开**，不要公开发布；
+  所有数据仍然只写本机 `D:\dsh-classroom-mobile\data`，不上传云端（音频只经过 Cloudflare 转发到你的电脑）。
 
 ## 手机连接（局域网，同一 Wi‑Fi 时可用）
 
@@ -145,6 +145,14 @@ http://<电脑局域网 IP>:8765
    **未改正的错题 > 0 时，手机端不允许开始新录音**（服务端也会 409 拦截）。
 7. 课后在 DSH 里说「结束专注/看看专注报告」→ `classroom_mobile_focus` 输出
    总时长、切走次数与累计离开时长、最长连续专注、番茄数。
+
+## 2026-11-07 新增功能
+
+- **导图四视图**：手机「导图」页顶部可在「脑图 / 组织树 / 时间轴 / 分块」之间切换；数据仍来自 `mindmap.md`，首行用 `%% type: mindmap|tree|timeline|brace` 指定默认视图。旧的 mermaid mindmap 代码块仍能显示。
+- **课堂重难点**：DSH 里说「生成重难点」或「生成这节课的总结、重难点和导图」，会同时写 `keypoints.md`（`## 重点 / ## 难点 / ## 易错点`，每条带 `[mm:ss]`），手机「总结」页会多一张「课堂重难点」卡片。
+- **拖入已有录音**：手机「录音」页新增上传区，可拖入/选择 `webm / m4a / mp3 / wav / ogg`，自动建会话、上传、排队转写；与 30 秒分片走同一条队列，按顺序追加字幕。
+
+`classroom_mobile_digest` 的任务包相应变为五项（总结、重难点、导图、拓展、题目）；保存时 `payload` 需要带 `keypoints` 与 `mindmapType`，缺了会明确报错、不会写坏文件。
 
 ## 转写引擎（按顺序降级）
 
