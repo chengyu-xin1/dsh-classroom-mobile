@@ -54,7 +54,9 @@
     "cordis.patch.yml",
     "README.md",
     "INSTALL-others.md",
-    "LICENSE"
+    "LICENSE",
+    "skills/dsh-plugin-publish/SKILL.md",
+    "skills/dsh-plugin-publish/references/checklist.md"
   ],
   "scripts": {
     "setup": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1",
