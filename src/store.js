@@ -95,6 +95,7 @@ export function sessionPaths(dir) {
     transcript: path.join(dir, 'transcript.md'),
     summary: path.join(dir, 'summary.md'),
     mindmap: path.join(dir, 'mindmap.md'),
+    keypoints: path.join(dir, 'keypoints.md'),
     quiz: path.join(dir, 'quiz.jsonl'),
     focus: path.join(dir, 'focus.jsonl'),
   };
