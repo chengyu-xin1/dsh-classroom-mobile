@@ -13,7 +13,7 @@
 import { ensureDirs, ensureAccessPin } from './store.js';
 import { startClassroomServer } from './server.js';
 import { mobileTools } from './tools.js';
-import { DATA_ROOT } from './config.js';
+import { DATA_ROOT, PIN_REQUIRED } from './config.js';
 import { startTunnel, stopTunnel, waitTunnelReady } from './tunnel.js';
 
 export const name = 'dsh-classroom-mobile';
@@ -30,7 +30,7 @@ export function apply(ctx) {
 
   const booting = (async () => {
     await ensureDirs();
-    const pin = await ensureAccessPin();
+    const pin = PIN_REQUIRED ? await ensureAccessPin() : '';
     if (closed) return;
     const started = await startClassroomServer();
     instance = started.instance;
@@ -40,7 +40,7 @@ export function apply(ctx) {
     }
     // 插件日志：DSH 宿主会把 console 输出收进日志
     console.log(
-      `[dsh-classroom-mobile] 服务已启动：http://127.0.0.1:${started.port}  （数据目录 ${DATA_ROOT}，访问码 ${pin}）`,
+      `[dsh-classroom-mobile] 服务已启动：http://127.0.0.1:${started.port}  （数据目录 ${DATA_ROOT}${pin ? `，访问码 ${pin}` : '，无需访问码'}）`,
     );
 
     // 公网隧道：成功的话手机在任何网络都能打开 https://xxx.trycloudflare.com
@@ -49,7 +49,7 @@ export function apply(ctx) {
       if (closed) return;
       if (t.status === 'ready' && t.url) {
         console.log(
-          `[dsh-classroom-mobile] 公网地址：${t.url}  访问码：${pin}（手机浏览器打开，输入访问码即可）`,
+          `[dsh-classroom-mobile] 公网地址：${t.url}${pin ? `  访问码：${pin}` : '（手机浏览器直接打开，无需访问码）'}`,
         );
       } else if (t.status === 'disabled') {
         console.log('[dsh-classroom-mobile] 公网隧道已关闭（DSH_CLASSROOM_MOBILE_TUNNEL=0），仅局域网可访问');
